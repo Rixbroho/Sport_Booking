@@ -2,8 +2,15 @@ const express=require('express');
 const app=express();
 const port=3000;
 
+app.use("/api/user/",require("./routes/route"));
+
+
+
 app.get('/',(req,res)=>{
     res.json({message:'Welcome to Sport Book API'});
+});
+app.get('/getAllusers',(req,res)=>{
+    res.json({message:'Welcome to users'});
 });
 
 app.listen(port,()=>{
