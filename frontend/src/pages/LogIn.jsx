@@ -9,7 +9,7 @@ const LoginPage = ({ onSwitchToSignup, onLogin }) => {
     if (formData.email && formData.password) {
       onLogin(formData);
     }
-  };
+  };//login frontend
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 flex items-center justify-center p-4 relative overflow-hidden">
