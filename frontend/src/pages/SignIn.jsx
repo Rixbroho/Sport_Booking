@@ -90,7 +90,7 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+977 98XXXXXXX"
                 />
               </div>
             </div>
