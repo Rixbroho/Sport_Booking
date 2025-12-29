@@ -1,8 +1,169 @@
-const getAllUser=async(req,res)=>{
-    res.json({message:"This is the get all user and hi"});
+const User=require("../models/userModel.js");
+const jwt=require("jsonwebtoken");
+const bcrypt=require("bcrypt");
 
+const addUser=async(req,res)=>{
+    try{
+        const {username,email,password}=req.body;
+        if(!username || !email || !password){
+            return res.status(400).json({message:"All fields are required"});
+        }
+
+        const isUser = await User.findOne({where:{username}});
+        const isemail = await User.findOne({where:{email}});
+        if(isUser||isemail){
+            return res.json({message:"User already exists"});
+        }
+
+        const hassed = await bcrypt.hash(password,10);
+        console.log(hassed);
+
+        const newUser=await User.create({
+            username,
+            email,
+            password: hassed
+        });
+
+        res.status(201).json({
+            message:"User created successfully",
+            user:newUser
+        });
+
+    }catch(error){
+        res.status(500).json({message:"Error creating user",error: error.message});
+    }
+}
+
+
+const getAllUser=async(req,res)=>{
+    try{
+        const users=await User.findAll({attributes:{exclude:["password"]}});
+        return res.json({users,message:"User fetched successfully"});        
+    }catch(error){
+        return res.status(500).json({message:"Error fetching users",error: error.message});
+    }
+}
+
+const getUsersById=async(req,res)=>{
+    try{
+        const id=req.params.id;
+        const user=await User.findByPk(id);
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+        return res.json({
+            user:{id:user.id,username:user.username},
+            message:"User fetched successfully"
+        });
+    }catch(error){
+        return res.status(500).json({
+            message:"Error fetching user",
+            error: error.message
+        });
+    }
+}
+
+const getActiveUsers = async (req, res) => {
+  res.json({ message: "Get active users - to be implemented" });
 };
 
+const updateUser=async(req,res)=>{
+    try{
+        const {id}=req.params;
+        const {username,email,password}=req.body;
+        const user=await User.findByPk(id);
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+
+        if(username){
+            const isexistinguser=await User.findOne({where:{username}});
+            if(isexistinguser && isexistinguser.id!==user.id){
+                return res.status(400).json({message:"User with that username exists"});
+            }
+        }
+
+
+        let hassedPassword=user.password;
+        if(password){
+            hassedPassword=await bcrypt.hash(password,10);
+        }
+        await user.update({
+            username:username|| user.username,
+            email:email|| user.email,
+            password:hassedPassword,
+        });
+        return res.status(200).json({message:"User updated successfully",user});
+    }catch(error){
+        return res.status(500).json
+
+    }
+}
+
+const deleteUser=async(req,res)=>{
+    try{
+        const id=req.params.id;
+        const user= await User.findByPk(id);
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+
+        await user.destroy();
+
+        return res.json({
+            // user:{id:user.id,username:user.username},
+            message:"User deleted"
+        });
+    }catch(error){
+        return res.status(500).json({
+            message:"Error",
+            error:error.message
+        })
+    }
+}
+
+const logInUser=async(req,res)=>{
+    try{
+        const {email,password}=req.body;
+        const user=await User.findOne({where:{email}});
+        if(!user){
+            return res.status(404).json({
+                message:"User not found"
+            })
+        }
+
+        const isvalidUser=await bcrypt.compare(password,user.password);
+
+        if(!isvalidUser){
+            return res.status(400).json({message:"Invalid credentials"});
+        }
+
+        const token=jwt.sign(
+            {
+                // id:user.id,
+                // role:user.role,
+                username:user.username,
+                email:user.email
+            },process.env.JWT_SECRET,
+            {expiresIn:"7d"}
+        );
+
+        return res.status(200).json({
+            message:"Login successful",
+            token,
+            user:{id:user.id,username:user.username,email:user.email,role:user.role}
+        });
+
+
+    }catch(error){
+        return res.status(500).json({
+            message:"Error logging in",
+            error:error.message
+        });
+    }
+}
+
 module.exports={
-    getAllUser
+    getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
+    logInUser
 }

@@ -10,3 +10,5 @@ npm install lucide-react
 <h3>backend<h3>
 npm i nodemon
 npm install sequelize pg pg-hstore
+npm i bcrypt
+npm i jsonwebtoken
