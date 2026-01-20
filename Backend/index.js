@@ -1,23 +1,31 @@
-const express = require('express');
-const app = express();
-const {squelize, connectDB, sequelize} = require('./database/db');
+const express=require('express');
+const { sequelize,connectDB } = require('./database/db');
+const app=express();
+const port=3000;
 
-app.use("/api/user/", require("./routes/route"));
-app.use("/api/user/", require("./routes/productRoute"));
+const cors=require('cors');
+app.use(cors({
+    origin:'http://localhost:5173',
+    // methods:['GET','POST','PUT','DELETE'],
+    credentials:true
+}));
 
-app.get('/', (req, res) => {
-    res.json('Welcome to our sport booking app');
+app.use(express.json());
+app.use('/api/user/',require('./routes/route'));
+// app.use('/api/user/',require('./routes/productRoute'));
+
+
+app.get('/',(req,res)=>{
+    res.json({message:'Welcome to the Home Page from backend! change vayo wow'});
 });
 
-// app.listen(3000, () => {
-//     console.log('Server is running on http://localhost:3000');
-// });
 
-const startServer = async () => {
+const startServer=async()=>{
     await connectDB();
-    await sequelize.sync({ alter: true }); // Sync models with the database
-    app.listen(3000, () => {
-        console.log('Server is running on http://localhost:3000');
+    await sequelize.sync({ alter:true });
+    app.listen(port,()=>{
+        console.log(`Server is running on port ${port}`);
     });
 }
+
 startServer();
