@@ -6,13 +6,13 @@ const addUser=async(req,res)=>{
     try{
         const {username,email,password}=req.body;
         if(!username || !email || !password){
-            return res.status(400).json({message:"All fields are required"});
+            return res.status(400).json({success:false,message:"All fields are required"});
         }
 
         const isUser = await User.findOne({where:{username}});
         const isemail = await User.findOne({where:{email}});
         if(isUser||isemail){
-            return res.json({message:"User already exists"});
+            return res.json({success:false,message:"User already exists"});
         }
 
         const hassed = await bcrypt.hash(password,10);
@@ -25,6 +25,7 @@ const addUser=async(req,res)=>{
         });
 
         res.status(201).json({
+            success:true,
             message:"User created successfully",
             user:newUser
         });
@@ -38,7 +39,7 @@ const addUser=async(req,res)=>{
 const getAllUser=async(req,res)=>{
     try{
         const users=await User.findAll({attributes:{exclude:["password"]}});
-        return res.json({users,message:"User fetched successfully"});        
+        return res.json({success:true,users,message:"User fetched successfully"});        
     }catch(error){
         return res.status(500).json({message:"Error fetching users",error: error.message});
     }
@@ -49,9 +50,10 @@ const getUsersById=async(req,res)=>{
         const id=req.params.id;
         const user=await User.findByPk(id);
         if(!user){
-            return res.status(404).json({message:"User not found"});
+            return res.status(404).json({success:false,message:"User not found"});
         }
         return res.json({
+            success:true,
             user:{id:user.id,username:user.username},
             message:"User fetched successfully"
         });
@@ -79,7 +81,7 @@ const updateUser=async(req,res)=>{
         if(username){
             const isexistinguser=await User.findOne({where:{username}});
             if(isexistinguser && isexistinguser.id!==user.id){
-                return res.status(400).json({message:"User with that username exists"});
+                return res.status(400).json({success:false,message:"User with that username exists"});
             }
         }
 
@@ -93,10 +95,11 @@ const updateUser=async(req,res)=>{
             email:email|| user.email,
             password:hassedPassword,
         });
-        return res.status(200).json({message:"User updated successfully",user});
+        return res.status(200).json({success:true,message:"User updated successfully",user:{
+            id:user.id
+        }});
     }catch(error){
-        return res.status(500).json
-
+        return res.status(500).json({message:"Error updating user",error: error.message});
     }
 }
 
@@ -105,12 +108,13 @@ const deleteUser=async(req,res)=>{
         const id=req.params.id;
         const user= await User.findByPk(id);
         if(!user){
-            return res.status(404).json({message:"User not found"});
+            return res.status(404).json({success:false,message:"User not found"});
         }
 
         await user.destroy();
 
-        return res.json({
+        return res.status(200).json({
+            success:true,
             // user:{id:user.id,username:user.username},
             message:"User deleted"
         });
@@ -128,6 +132,7 @@ const logInUser=async(req,res)=>{
         const user=await User.findOne({where:{email}});
         if(!user){
             return res.status(404).json({
+                success:false,
                 message:"User not found"
             })
         }
@@ -135,7 +140,7 @@ const logInUser=async(req,res)=>{
         const isvalidUser=await bcrypt.compare(password,user.password);
 
         if(!isvalidUser){
-            return res.status(400).json({message:"Invalid credentials"});
+            return res.status(400).json({success:false,message:"Invalid credentials"});
         }
 
         const token=jwt.sign(
@@ -149,6 +154,7 @@ const logInUser=async(req,res)=>{
         );
 
         return res.status(200).json({
+            success:true,
             message:"Login successful",
             token,
             user:{id:user.id,username:user.username,email:user.email,role:user.role}
@@ -163,7 +169,29 @@ const logInUser=async(req,res)=>{
     }
 }
 
+const getMe = async (req, res) => {
+  const id=req.user.id
+  try {
+    const user = await User.findByPk(id)
+    return res.json({ 
+        success:true,
+        user: { 
+            id: user.id, 
+            username: user.username, 
+            email: user.email, 
+            // role: user.role 
+        },
+        message: "User fetched successfully" 
+    })
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error fetching users",
+      error: error.message,
+    });
+  }
+}
+
 module.exports={
     getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
-    logInUser
+    logInUser,getMe
 }
