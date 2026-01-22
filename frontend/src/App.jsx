@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import LogIn from './pages/LogIn';
 import SignIn from './pages/SignIn';
 import ForgetPassword from './pages/ForgetPassword';
+import UserDashboard from './pages/userDashboard';
 
 function App(){
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -52,9 +53,10 @@ function App(){
         <Route path="/register" element={<SignIn onSwitchToLogin={(navigate) => navigate('/Login')} isAuthenticated={isAuthenticated} />} />
         <Route path="/ForgetPassword" element={<ForgetPassword/>} />
         <Route path="*" element={<Navigate to="/Login" replace />} />
+        <Route path="/dashboard" element={<UserDashboard/>} />
       </Routes>
     </Router>
   );
 }
 
-export default App;
+export default App;
