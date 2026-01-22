@@ -1,8 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { signupUser } from '../services/api';
 
-const SignIn = ({ onSwitchToLogin, onSignup }) => {
+const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      toast.info('You are already registered! Redirecting to home page...');
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+    }
+  }, [isAuthenticated, navigate]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -17,15 +29,15 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
 
   const handleSubmit = async () => {
     if (!formData.fullName || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
-      alert('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      toast.error('Passwords do not match!');
       return;
     }
     if (!agreedToTerms) {
-      alert('Please agree to the terms and conditions');
+      toast.error('Please agree to the terms and conditions');
       return;
     }
     
@@ -33,11 +45,20 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
       setLoading(true);
       const response = await signupUser(formData);
       if (response.data.success) {
-        alert('Account created successfully! Please log in.');
-        onSwitchToLogin();
+        toast.success('Account created successfully! Redirecting to login...');
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: ''
+        });
+        setTimeout(() => {
+          navigate('/Login');
+        }, 1500);
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Signup failed. Please try again.');
+      toast.error(error.response?.data?.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -207,33 +228,3 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
 };
 
 export default SignIn;
-
-// export default function App() {
-//   const [currentPage, setCurrentPage] = useState('login');
-
-//   const handleLogin = (data) => {
-//     console.log('Login data:', data);
-//     alert(`Login successful! Email: ${data.email}`);
-//   };
-
-//   const handleSignup = (data) => {
-//     console.log('Signup data:', data);
-//     alert(`Account created! Welcome ${data.fullName}`);
-//   };
-
-//   return (
-//     <>
-//       {currentPage === 'login' ? (
-//         <LoginPage
-//           onSwitchToSignup={() => setCurrentPage('signup')}
-//           onLogin={handleLogin}
-//         />
-//       ) : (
-//         <SignupPage
-//           onSwitchToLogin={() => setCurrentPage('login')}
-//           onSignup={handleSignup}
-//         />
-//       )}
-//     </>
-//   );
-// }

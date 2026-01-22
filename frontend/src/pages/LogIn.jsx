@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { loginUser } from '../services/api';
 
 const LogIn = ({ onSwitchToSignup, onLogin }) => {
@@ -11,7 +12,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
 
   const handleSubmit = async () => {
     if (!formData.email || !formData.password) {
-      alert('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
     
@@ -21,12 +22,12 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        alert('Login successful!');
+        toast.success('Login successful!');
         onLogin(response.data.user);
         navigate('/');
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Login failed. Please try again.');
+      toast.error(error.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

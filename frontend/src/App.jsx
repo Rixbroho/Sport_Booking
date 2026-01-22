@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import LogIn from './pages/LogIn';
 import SignIn from './pages/SignIn';
 import ForgetPassword from './pages/ForgetPassword';
@@ -31,10 +33,22 @@ function App(){
 
   return (
     <Router>
+      <ToastContainer 
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <Routes>
         <Route path="/" element={<div>HomePage {isAuthenticated && `- Welcome ${user?.username}`}</div>} />
         <Route path="/Login" element={<LogIn onSwitchToSignup={() => {}} onLogin={handleLogin} />} />
-        <Route path="/register" element={<SignIn onSwitchToLogin={() => {}} />} />
+        <Route path="/register" element={<SignIn onSwitchToLogin={() => {}} isAuthenticated={isAuthenticated} />} />
         <Route path="/ForgetPassword" element={<ForgetPassword/>} />
         
       </Routes>
