@@ -10,6 +10,10 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
 
+  const handleSwitchToSignup = () => {
+    navigate('/register');
+  };
+
   const handleSubmit = async () => {
     if (!formData.email || !formData.password) {
       toast.error('Please fill in all fields');
@@ -114,7 +118,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
             <p className="text-gray-600">
               Don't have an account?{' '}
               <button
-                onClick={onSwitchToSignup}
+                onClick={handleSwitchToSignup}
                 className="text-emerald-600 hover:text-emerald-700 font-bold hover:underline"
               >
                 Create Account
@@ -130,33 +134,3 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
 
 export default LogIn;
 
-
-// export default function App() {
-//   const [currentPage, setCurrentPage] = useState('login');
-
-//   const handleLogin = (data) => {
-//     console.log('Login data:', data);
-//     alert(`Login successful! Email: ${data.email}`);
-//   };
-
-//   const handleSignup = (data) => {
-//     console.log('Signup data:', data);
-//     alert(`Account created! Welcome ${data.fullName}`);
-//   };
-
-//   return (
-//     <>
-//       {currentPage === 'login' ? (
-//         <LoginPage
-//           onSwitchToSignup={() => setCurrentPage('signup')}
-//           onLogin={handleLogin}
-//         />
-//       ) : (
-//         <SignupPage
-//           onSwitchToLogin={() => setCurrentPage('login')}
-//           onSignup={handleSignup}
-//         />
-//       )}
-//     </>
-//   );
-// }

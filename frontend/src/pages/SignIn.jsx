@@ -7,15 +7,9 @@ import { signupUser } from '../services/api';
 const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      toast.info('You are already registered! Redirecting to home...');
-      const timer = setTimeout(() => {
-        navigate('/');
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, navigate]);
+  const handleSwitchToLogin = () => {
+    navigate('/Login');
+  };
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -216,7 +210,7 @@ const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
             <p className="text-gray-600">
               Already have an account?{' '}
               <button
-                onClick={onSwitchToLogin}
+                onClick={handleSwitchToLogin}
                 className="text-emerald-600 hover:text-emerald-700 font-bold hover:underline"
               >
                 Sign In

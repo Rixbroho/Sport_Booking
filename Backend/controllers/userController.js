@@ -5,8 +5,8 @@ const bcrypt=require("bcrypt");
 const addUser=async(req,res)=>{
     try{
         const {username,email,password,phoneNumber}=req.body;
-        if(!username || !email || !password){
-            return res.status(400).json({success:false,message:"All fields are required"});
+        if(!email || !password){
+            return res.status(400).json({success:false,message:"Email and password are required"});
         }
 
         // const isUser = await User.findOne({where:{username}});

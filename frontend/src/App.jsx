@@ -48,8 +48,8 @@ function App(){
       />
       <Routes>
         <Route path="/" element={isAuthenticated ? <div className="min-h-screen bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center"><h1 className="text-white text-4xl">Welcome {user?.username}</h1></div> : <Navigate to="/Login" replace />} />
-        <Route path="/Login" element={<LogIn onSwitchToSignup={() => {}} onLogin={handleLogin} />} />
-        <Route path="/register" element={<SignIn onSwitchToLogin={() => {}} isAuthenticated={isAuthenticated} />} />
+        <Route path="/Login" element={<LogIn onSwitchToSignup={(navigate) => navigate('/register')} onLogin={handleLogin} />} />
+        <Route path="/register" element={<SignIn onSwitchToLogin={(navigate) => navigate('/Login')} isAuthenticated={isAuthenticated} />} />
         <Route path="/ForgetPassword" element={<ForgetPassword/>} />
         <Route path="*" element={<Navigate to="/Login" replace />} />
       </Routes>
