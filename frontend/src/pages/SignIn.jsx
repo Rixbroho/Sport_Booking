@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check } from 'lucide-react';
+import { signupUser } from '../services/api';
 
 const SignIn = ({ onSwitchToLogin, onSignup }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -13,7 +15,7 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
     confirmPassword: ''
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.fullName || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
       alert('Please fill in all fields');
       return;
@@ -26,11 +28,23 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
       alert('Please agree to the terms and conditions');
       return;
     }
-    onSignup(formData);
+    
+    try {
+      setLoading(true);
+      const response = await signupUser(formData);
+      if (response.data.success) {
+        alert('Account created successfully! Please log in.');
+        onSwitchToLogin();
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-400 via-emerald-500 to-green-600 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-teal-400 via-emerald-500 to-green-600 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl top-0 -right-48 animate-pulse"></div>
@@ -38,7 +52,7 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
       </div>
 
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 backdrop-blur-sm">
-        <div className="bg-gradient-to-br from-teal-500 to-emerald-600 p-10 text-white text-center relative">
+        <div className="bg-linear-to-br from-teal-500 to-emerald-600 p-10 text-white text-center relative">
           <div className="absolute top-0 left-0 w-40 h-40 bg-white/10 rounded-full -ml-20 -mt-20"></div>
           <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mb-16"></div>
           <h1 className="text-4xl font-bold mb-3 relative">Create Account</h1>
@@ -167,10 +181,11 @@ const SignIn = ({ onSwitchToLogin, onSignup }) => {
 
             <button
               onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:from-teal-600 hover:to-emerald-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-linear-to-r from-teal-500 to-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:from-teal-600 hover:to-emerald-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
-              <ArrowRight className="w-5 h-5" />
+              {loading ? 'Creating Account...' : 'Create Account'}
+              {!loading && <ArrowRight className="w-5 h-5" />}
             </button>
           </div>
 

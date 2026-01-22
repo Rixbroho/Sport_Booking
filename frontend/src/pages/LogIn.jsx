@@ -1,13 +1,34 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check } from 'lucide-react';
+import { loginUser } from '../services/api';
 
 const LogIn = ({ onSwitchToSignup, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
 
-  const handleSubmit = () => {
-    if (formData.email && formData.password) {
-      onLogin(formData);
+  const handleSubmit = async () => {
+    if (!formData.email || !formData.password) {
+      alert('Please fill in all fields');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await loginUser(formData);
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        alert('Login successful!');
+        onLogin(response.data.user);
+        navigate('/');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,10 +101,11 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
 
             <button
               onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
-              <ArrowRight className="w-5 h-5" />
+              {loading ? 'Signing In...' : 'Sign In'}
+              {!loading && <ArrowRight className="w-5 h-5" />}
             </button>
           </div>
 

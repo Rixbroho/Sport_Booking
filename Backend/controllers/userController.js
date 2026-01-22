@@ -4,24 +4,28 @@ const bcrypt=require("bcrypt");
 
 const addUser=async(req,res)=>{
     try{
-        const {username,email,password}=req.body;
+        const {username,email,password,phoneNumber}=req.body;
         if(!username || !email || !password){
             return res.status(400).json({success:false,message:"All fields are required"});
         }
 
-        const isUser = await User.findOne({where:{username}});
+        // const isUser = await User.findOne({where:{username}});
         const isemail = await User.findOne({where:{email}});
-        if(isUser||isemail){
+        // if(isUser||isemail){
+        //     return res.json({success:false,message:"User already exists"});
+        // }
+        if(isemail){
             return res.json({success:false,message:"User already exists"});
         }
 
         const hassed = await bcrypt.hash(password,10);
-        console.log(hassed);
+        // console.log(hassed);
 
         const newUser=await User.create({
             username,
             email,
-            password: hassed
+            password: hassed,
+            phoneNumber
         });
 
         res.status(201).json({
@@ -72,7 +76,7 @@ const getActiveUsers = async (req, res) => {
 const updateUser=async(req,res)=>{
     try{
         const {id}=req.params;
-        const {username,email,password}=req.body;
+        const {username,email,password,phoneNumber}=req.body;
         const user=await User.findByPk(id);
         if(!user){
             return res.status(404).json({message:"User not found"});
@@ -94,6 +98,7 @@ const updateUser=async(req,res)=>{
             username:username|| user.username,
             email:email|| user.email,
             password:hassedPassword,
+            phoneNumber:phoneNumber|| user.phoneNumber,
         });
         return res.status(200).json({success:true,message:"User updated successfully",user:{
             id:user.id
@@ -146,7 +151,7 @@ const logInUser=async(req,res)=>{
         const token=jwt.sign(
             {
                 // id:user.id,
-                // role:user.role,
+                role:user.role,
                 username:user.username,
                 email:user.email
             },process.env.JWT_SECRET,
@@ -179,7 +184,7 @@ const getMe = async (req, res) => {
             id: user.id, 
             username: user.username, 
             email: user.email, 
-            // role: user.role 
+            role: user.role 
         },
         message: "User fetched successfully" 
     })
