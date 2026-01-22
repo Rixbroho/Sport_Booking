@@ -9,10 +9,11 @@ const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      toast.info('You are already registered! Redirecting to home page...');
-      setTimeout(() => {
+      toast.info('You are already registered! Redirecting to home...');
+      const timer = setTimeout(() => {
         navigate('/');
       }, 2000);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, navigate]);
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +46,7 @@ const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
       setLoading(true);
       const response = await signupUser(formData);
       if (response.data.success) {
-        toast.success('Account created successfully! Redirecting to login...');
+        const toastId = toast.success('Account created successfully! Redirecting to login...');
         setFormData({
           fullName: '',
           email: '',
@@ -54,6 +55,7 @@ const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
           confirmPassword: ''
         });
         setTimeout(() => {
+          toast.dismiss(toastId);
           navigate('/Login');
         }, 1500);
       }
@@ -72,7 +74,7 @@ const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
         <div className="absolute w-96 h-96 bg-teal-400/30 rounded-full blur-3xl bottom-0 -left-48 animate-pulse delay-1000"></div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-50 backdrop-blur-sm">
         <div className="bg-linear-to-br from-teal-500 to-emerald-600 p-10 text-white text-center relative">
           <div className="absolute top-0 left-0 w-40 h-40 bg-white/10 rounded-full -ml-20 -mt-20"></div>
           <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mb-16"></div>

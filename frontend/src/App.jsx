@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import LogIn from './pages/LogIn';
@@ -44,13 +44,14 @@ function App(){
         draggable
         pauseOnHover
         theme="light"
+        style={{ zIndex: 9999 }}
       />
       <Routes>
-        <Route path="/" element={<div>HomePage {isAuthenticated && `- Welcome ${user?.username}`}</div>} />
+        <Route path="/" element={isAuthenticated ? <div className="min-h-screen bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center"><h1 className="text-white text-4xl">Welcome {user?.username}</h1></div> : <Navigate to="/Login" replace />} />
         <Route path="/Login" element={<LogIn onSwitchToSignup={() => {}} onLogin={handleLogin} />} />
         <Route path="/register" element={<SignIn onSwitchToLogin={() => {}} isAuthenticated={isAuthenticated} />} />
         <Route path="/ForgetPassword" element={<ForgetPassword/>} />
-        
+        <Route path="*" element={<Navigate to="/Login" replace />} />
       </Routes>
     </Router>
   );
