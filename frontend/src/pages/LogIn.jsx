@@ -14,6 +14,10 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
     navigate('/register');
   };
 
+  const handleForgotPassword = () => {
+    navigate('/ForgetPassword');
+  };
+
   const handleSubmit = async () => {
     if (!formData.email || !formData.password) {
       toast.error('Please fill in all fields');
@@ -99,9 +103,12 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
                 <input type="checkbox" className="w-5 h-5 accent-emerald-500 cursor-pointer" />
                 <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-800">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:underline">
+              <button
+                onClick={handleForgotPassword}
+                className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:underline bg-transparent border-none cursor-pointer"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button

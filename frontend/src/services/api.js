@@ -36,6 +36,18 @@ export const loginUser = (credentials) =>
     password: credentials.password,
   });
 
+export const forgotPassword = (email) =>
+  API.post('/user/forgotpassword', {
+    email,
+  });
+
+export const resetPassword = (email, newPassword, resetToken) =>
+  API.post('/user/resetpassword', {
+    email,
+    newPassword,
+    resetToken,
+  });
+
 export const getMe = () => API.get('/user/me');
 
 export default API;
