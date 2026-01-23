@@ -32,7 +32,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         toast.success('Login successful!');
         onLogin(response.data.user);
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed. Please try again.');

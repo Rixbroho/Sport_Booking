@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
 import { 
-  LayoutDashboard, 
-  Calendar, 
-  MapPin, 
-  User, 
-  Settings, 
-  LogOut, 
   Search, 
   Bell, 
   Plus,
   Clock,
   ChevronRight,
-  Trophy
+  Trophy,
+  Calendar,
+  MapPin
 } from 'lucide-react';
+import Nav from '../components/Nav';
 
-const UserDashboard = ({ user = { name: "Alex Johnson", role: "Player" }, onLogout }) => {
+const UserDashboard = ({ user = { username: "Guest", role: "Player" }, onLogout, setCurrentPage }) => {
   const [activeTab, setActiveTab] = useState('Dashboard');
+
+  // Ensure user has the required properties
+  const displayUser = {
+    username: user?.username || "Guest",
+    role: user?.role || "Player"
+  };
+
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'Bookings') {
+      setCurrentPage('bookings');
+    }
+  };
 
   const stats = [
     { label: 'Total Bookings', value: '12', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-100' },
@@ -31,55 +42,13 @@ const UserDashboard = ({ user = { name: "Alex Johnson", role: "Player" }, onLogo
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* 1. Persistent Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
-        <div className="p-8 flex items-center gap-3">
-          <div className="bg-emerald-500 p-2 rounded-lg">
-            <LayoutDashboard className="text-white w-6 h-6" />
-          </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-            TurfTime
-          </span>
-        </div>
-
-        <nav className="flex-1 px-4 space-y-2">
-          {['Dashboard', 'Bookings', 'Venues', 'Profile', 'Settings'].map((item) => {
-            const icons = { Dashboard: LayoutDashboard, Bookings: Calendar, Venues: MapPin, Profile: User, Settings: Settings };
-            const Icon = icons[item];
-            const isActive = activeTab === item;
-
-            return (
-              <button
-                key={item}
-                onClick={() => setActiveTab(item)}
-                className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
-                  isActive 
-                    ? 'bg-emerald-50 text-emerald-600 border-r-4 border-emerald-500' 
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                <Icon size={20} />
-                <span className="font-semibold">{item}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-gray-100">
-          <button 
-            onClick={onLogout}
-            className="w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-all"
-          >
-            <LogOut size={20} />
-            <span className="font-semibold">Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Navigation Sidebar */}
+      <Nav activeTab={activeTab} setActiveTab={handleTabChange} onLogout={onLogout} />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         
-        {/* 2. Header */}
+        {/* Header */}
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
           <h2 className="text-2xl font-bold text-gray-800">{activeTab} Overview</h2>
           
@@ -98,17 +67,17 @@ const UserDashboard = ({ user = { name: "Alex Johnson", role: "Player" }, onLogo
             </button>
             <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
               <div className="text-right">
-                <p className="text-sm font-bold text-gray-800">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.role}</p>
+                <p className="text-sm font-bold text-gray-800">{displayUser.username}</p>
+                <p className="text-xs text-gray-500">{displayUser.role}</p>
               </div>
               <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
-                {user.name.split(' ').map(n => n[0]).join('')}
+                {displayUser.username.split(' ').map(n => n[0]).join('')}
               </div>
             </div>
           </div>
         </header>
 
-        {/* 3. Dashboard Body */}
+        {/* Dashboard Body */}
         <div className="flex-1 overflow-y-auto p-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -126,11 +95,14 @@ const UserDashboard = ({ user = { name: "Alex Johnson", role: "Player" }, onLogo
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* 4. Recent Activity (Bookings Table) */}
-            <div className="flex-[2] bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Recent Activity (Bookings Table) */}
+            <div className="flex-2 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-800">Your Upcoming Bookings</h3>
-                <button className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm flex items-center gap-1">
+                <button 
+                  onClick={() => handleTabChange('Bookings')}
+                  className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm flex items-center gap-1"
+                >
                   View All <ChevronRight size={16} />
                 </button>
               </div>
@@ -174,7 +146,7 @@ const UserDashboard = ({ user = { name: "Alex Johnson", role: "Player" }, onLogo
 
             {/* Quick Action Sidebar */}
             <div className="flex-1 space-y-6">
-              <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+              <div className="bg-linear-to-br from-emerald-500 to-green-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
                 <div className="relative z-10">
                   <h3 className="text-xl font-bold mb-2">Book a Turf</h3>
                   <p className="text-emerald-100 text-sm mb-6">Ready for your next game? Find the best slots near you.</p>
@@ -182,7 +154,7 @@ const UserDashboard = ({ user = { name: "Alex Johnson", role: "Player" }, onLogo
                     <Plus size={20} /> New Booking
                   </button>
                 </div>
-                {/* Decorative circles to match Login UI */}
+                {/* Decorative circles */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
               </div>
               
