@@ -1,13 +1,54 @@
-import { useState } from 'react';
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  ArrowRight,
+  Check,
+} from "lucide-react";
+import { toast } from "react-toastify";
+import { loginUser } from "../services/api";
 
 const LogIn = ({ onSwitchToSignup, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
-  const handleSubmit = () => {
-    if (formData.email && formData.password) {
-      onLogin(formData);
+  const handleSwitchToSignup = () => {
+    navigate("/register");
+  };
+
+  const handleForgotPassword = () => {
+    navigate("/forget-password");
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.email || !formData.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await loginUser(formData);
+      if (response.data.success) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        toast.success("Login successful!");
+        onLogin(response.data.user);
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Login failed. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };//login frontend
 
@@ -19,12 +60,14 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
         <div className="absolute w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl bottom-0 -right-48 animate-pulse delay-1000"></div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-50 backdrop-blur-sm">
         <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-10 text-white text-center relative">
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"></div>
           <h1 className="text-4xl font-bold mb-3 relative">Welcome Back</h1>
-          <p className="text-emerald-50 text-lg relative">Sign in to continue your journey</p>
+          <p className="text-emerald-50 text-lg relative">
+            Sign in to continue your journey
+          </p>
         </div>
 
         <div className="p-10">
@@ -38,7 +81,9 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                   placeholder="you@example.com"
                 />
@@ -52,10 +97,12 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 w-5 h-5 transition-colors" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
                   className="w-full pl-12 pr-14 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                   placeholder="Enter your password"
                 />
@@ -63,35 +110,48 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-emerald-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="flex items-center cursor-pointer group">
-                <input type="checkbox" className="w-5 h-5 accent-emerald-500 cursor-pointer" />
-                <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-800">Remember me</span>
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                />
+                <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-800">
+                  Remember me
+                </span>
               </label>
-              <a href="#" className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:underline">
+              <button
+                onClick={handleForgotPassword}
+                className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:underline bg-transparent border-none cursor-pointer"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button
               onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
-              <ArrowRight className="w-5 h-5" />
+              {loading ? "Signing In..." : "Sign In"}
+              {!loading && <ArrowRight className="w-5 h-5" />}
             </button>
           </div>
 
           <div className="mt-8 text-center">
             <p className="text-gray-600">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <button
-                onClick={onSwitchToSignup}
+                onClick={handleSwitchToSignup}
                 className="text-emerald-600 hover:text-emerald-700 font-bold hover:underline"
               >
                 Create Account
@@ -104,36 +164,4 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
   );
 };
 
-
 export default LogIn;
-
-
-// export default function App() {
-//   const [currentPage, setCurrentPage] = useState('login');
-
-//   const handleLogin = (data) => {
-//     console.log('Login data:', data);
-//     alert(`Login successful! Email: ${data.email}`);
-//   };
-
-//   const handleSignup = (data) => {
-//     console.log('Signup data:', data);
-//     alert(`Account created! Welcome ${data.fullName}`);
-//   };
-
-//   return (
-//     <>
-//       {currentPage === 'login' ? (
-//         <LoginPage
-//           onSwitchToSignup={() => setCurrentPage('signup')}
-//           onLogin={handleLogin}
-//         />
-//       ) : (
-//         <SignupPage
-//           onSwitchToLogin={() => setCurrentPage('login')}
-//           onSignup={handleSignup}
-//         />
-//       )}
-//     </>
-//   );
-// }
