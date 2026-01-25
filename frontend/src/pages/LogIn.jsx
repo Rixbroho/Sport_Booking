@@ -1,13 +1,43 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { loginUser } from '../services/api';
 
 const LogIn = ({ onSwitchToSignup, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
 
-  const handleSubmit = () => {
-    if (formData.email && formData.password) {
-      onLogin(formData);
+  const handleSwitchToSignup = () => {
+    navigate('/register');
+  };
+
+  const handleForgotPassword = () => {
+    navigate('/ForgetPassword');
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.email || !formData.password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await loginUser(formData);
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        toast.success('Login successful!');
+        onLogin(response.data.user);
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -19,7 +49,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
         <div className="absolute w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl bottom-0 -right-48 animate-pulse delay-1000"></div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-50 backdrop-blur-sm">
         <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-10 text-white text-center relative">
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"></div>
@@ -73,17 +103,21 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
                 <input type="checkbox" className="w-5 h-5 accent-emerald-500 cursor-pointer" />
                 <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-800">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:underline">
+              <button
+                onClick={handleForgotPassword}
+                className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:underline bg-transparent border-none cursor-pointer"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button
               onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
-              <ArrowRight className="w-5 h-5" />
+              {loading ? 'Signing In...' : 'Sign In'}
+              {!loading && <ArrowRight className="w-5 h-5" />}
             </button>
           </div>
 
@@ -91,7 +125,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
             <p className="text-gray-600">
               Don't have an account?{' '}
               <button
-                onClick={onSwitchToSignup}
+                onClick={handleSwitchToSignup}
                 className="text-emerald-600 hover:text-emerald-700 font-bold hover:underline"
               >
                 Create Account
@@ -107,33 +141,3 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
 
 export default LogIn;
 
-
-// export default function App() {
-//   const [currentPage, setCurrentPage] = useState('login');
-
-//   const handleLogin = (data) => {
-//     console.log('Login data:', data);
-//     alert(`Login successful! Email: ${data.email}`);
-//   };
-
-//   const handleSignup = (data) => {
-//     console.log('Signup data:', data);
-//     alert(`Account created! Welcome ${data.fullName}`);
-//   };
-
-//   return (
-//     <>
-//       {currentPage === 'login' ? (
-//         <LoginPage
-//           onSwitchToSignup={() => setCurrentPage('signup')}
-//           onLogin={handleLogin}
-//         />
-//       ) : (
-//         <SignupPage
-//           onSwitchToLogin={() => setCurrentPage('login')}
-//           onSignup={handleSignup}
-//         />
-//       )}
-//     </>
-//   );
-// }
