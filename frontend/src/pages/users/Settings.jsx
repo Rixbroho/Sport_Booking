@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
-import { Bell, Lock, Eye, EyeOff, Shield, Smartphone, LogOut } from 'lucide-react';
-import Nav from '../components/Nav';
+import React, { useState } from "react";
+import {
+  Bell,
+  Lock,
+  Eye,
+  EyeOff,
+  Shield,
+  Smartphone,
+  LogOut,
+} from "lucide-react";
+import Nav from "../components/Nav";
 
 const Settings = ({ user, onLogout, setCurrentPage }) => {
-  const [activeNavTab, setActiveNavTab] = useState('Settings');
+  const [activeNavTab, setActiveNavTab] = useState("Settings");
   const [showPassword, setShowPassword] = useState(false);
   const [notifications, setNotifications] = useState({
     bookingReminders: true,
     promotions: false,
     reviews: true,
-    messages: true
+    messages: true,
   });
 
   const handleNavTabChange = (tab) => {
@@ -20,29 +28,37 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
   const handleNotificationChange = (key) => {
     setNotifications({
       ...notifications,
-      [key]: !notifications[key]
+      [key]: !notifications[key],
     });
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Navigation Sidebar */}
-      <Nav activeTab={activeNavTab} setActiveTab={handleNavTabChange} onLogout={onLogout} />
+      <Nav
+        activeTab={activeNavTab}
+        setActiveTab={handleNavTabChange}
+        onLogout={onLogout}
+      />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        
+      <main className="flex-1 flex flex-col overflow-hidden md:ml-64">
         {/* Header */}
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
           <h2 className="text-2xl font-bold text-gray-800">Settings</h2>
-          
+
           <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
             <div className="text-right">
-              <p className="text-sm font-bold text-gray-800">{user?.username}</p>
+              <p className="text-sm font-bold text-gray-800">
+                {user?.username}
+              </p>
               <p className="text-xs text-gray-500">{user?.role}</p>
             </div>
             <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
-              {user?.username?.split(' ').map(n => n[0]).join('') || 'U'}
+              {user?.username
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("") || "U"}
             </div>
           </div>
         </header>
@@ -50,26 +66,33 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
         {/* Settings Content */}
         <div className="flex-1 overflow-y-auto p-8">
           <div className="max-w-2xl space-y-6">
-            
             {/* Notification Settings */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="flex items-center gap-3 mb-6">
                 <Bell className="text-emerald-500" size={24} />
-                <h3 className="text-lg font-bold text-gray-800">Notification Settings</h3>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Notification Settings
+                </h3>
               </div>
 
               <div className="space-y-4">
                 {/* Booking Reminders */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-semibold text-gray-800">Booking Reminders</p>
-                    <p className="text-sm text-gray-500">Get notified about upcoming bookings</p>
+                    <p className="font-semibold text-gray-800">
+                      Booking Reminders
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Get notified about upcoming bookings
+                    </p>
                   </div>
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
                       checked={notifications.bookingReminders}
-                      onChange={() => handleNotificationChange('bookingReminders')}
+                      onChange={() =>
+                        handleNotificationChange("bookingReminders")
+                      }
                       className="w-5 h-5 accent-emerald-500"
                     />
                   </label>
@@ -78,14 +101,18 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                 {/* Promotions */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-semibold text-gray-800">Promotions & Offers</p>
-                    <p className="text-sm text-gray-500">Receive promotional emails and special offers</p>
+                    <p className="font-semibold text-gray-800">
+                      Promotions & Offers
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Receive promotional emails and special offers
+                    </p>
                   </div>
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
                       checked={notifications.promotions}
-                      onChange={() => handleNotificationChange('promotions')}
+                      onChange={() => handleNotificationChange("promotions")}
                       className="w-5 h-5 accent-emerald-500"
                     />
                   </label>
@@ -94,14 +121,18 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                 {/* Reviews */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-semibold text-gray-800">Review Requests</p>
-                    <p className="text-sm text-gray-500">Get asked to review venues you've booked</p>
+                    <p className="font-semibold text-gray-800">
+                      Review Requests
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Get asked to review venues you've booked
+                    </p>
                   </div>
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
                       checked={notifications.reviews}
-                      onChange={() => handleNotificationChange('reviews')}
+                      onChange={() => handleNotificationChange("reviews")}
                       className="w-5 h-5 accent-emerald-500"
                     />
                   </label>
@@ -111,13 +142,15 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-semibold text-gray-800">Messages</p>
-                    <p className="text-sm text-gray-500">Notifications for new messages</p>
+                    <p className="text-sm text-gray-500">
+                      Notifications for new messages
+                    </p>
                   </div>
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
                       checked={notifications.messages}
-                      onChange={() => handleNotificationChange('messages')}
+                      onChange={() => handleNotificationChange("messages")}
                       className="w-5 h-5 accent-emerald-500"
                     />
                   </label>
@@ -129,7 +162,9 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="flex items-center gap-3 mb-6">
                 <Shield className="text-emerald-500" size={24} />
-                <h3 className="text-lg font-bold text-gray-800">Security Settings</h3>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Security Settings
+                </h3>
               </div>
 
               <div className="space-y-4">
@@ -139,8 +174,12 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                     <div className="flex items-center gap-3">
                       <Lock size={18} className="text-emerald-500" />
                       <div>
-                        <p className="font-semibold text-gray-800">Change Password</p>
-                        <p className="text-sm text-gray-500">Update your password regularly for security</p>
+                        <p className="font-semibold text-gray-800">
+                          Change Password
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Update your password regularly for security
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -155,8 +194,12 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                     <div className="flex items-center gap-3">
                       <Smartphone size={18} className="text-emerald-500" />
                       <div>
-                        <p className="font-semibold text-gray-800">Two-Factor Authentication</p>
-                        <p className="text-sm text-gray-500">Add an extra layer of security</p>
+                        <p className="font-semibold text-gray-800">
+                          Two-Factor Authentication
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Add an extra layer of security
+                        </p>
                       </div>
                     </div>
                     <label className="flex items-center cursor-pointer">
@@ -172,7 +215,9 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
 
             {/* Danger Zone */}
             <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-8">
-              <h3 className="text-lg font-bold text-red-600 mb-6">Danger Zone</h3>
+              <h3 className="text-lg font-bold text-red-600 mb-6">
+                Danger Zone
+              </h3>
 
               <div className="space-y-4">
                 {/* Logout */}
