@@ -1,0 +1,73 @@
+[33md957846[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelopment[m[33m, [m[1;31morigin/Rix[m[33m, [m[1;32mRix[m[33m)[m HEAD@{0}: merge Rix: Fast-forward
+[33m2071c53[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/development[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{1}: checkout: moving from Rix to development
+[33md957846[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelopment[m[33m, [m[1;31morigin/Rix[m[33m, [m[1;32mRix[m[33m)[m HEAD@{2}: commit: Remove .env from tracking and add to gitignore
+[33m2071c53[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/development[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{3}: checkout: moving from main to Rix
+[33m2071c53[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/development[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{4}: merge development: Fast-forward
+[33m3c92865[m HEAD@{5}: checkout: moving from Rix to main
+[33m2071c53[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/development[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{6}: merge development: Fast-forward
+[33maddebda[m HEAD@{7}: checkout: moving from development to Rix
+[33m2071c53[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/development[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{8}: commit: fix
+[33m5ed4838[m HEAD@{9}: checkout: moving from Rix to development
+[33maddebda[m HEAD@{10}: checkout: moving from development to Rix
+[33m5ed4838[m HEAD@{11}: commit: frontend done
+[33maddebda[m HEAD@{12}: merge Rix: Fast-forward
+[33mf1a4cf9[m HEAD@{13}: checkout: moving from Rix to development
+[33maddebda[m HEAD@{14}: commit: fix
+[33mf1a4cf9[m HEAD@{15}: checkout: moving from development to Rix
+[33mf1a4cf9[m HEAD@{16}: merge Rix: Fast-forward
+[33mbae1e63[m HEAD@{17}: checkout: moving from Rix to development
+[33mf1a4cf9[m HEAD@{18}: commit (merge): Merge branch 'development' into Rix
+[33m1079ffb[m HEAD@{19}: checkout: moving from development to Rix
+[33mbae1e63[m HEAD@{20}: commit: fix
+[33m2da67f4[m HEAD@{21}: checkout: moving from Rix to development
+[33m1079ffb[m HEAD@{22}: checkout: moving from development to Rix
+[33m2da67f4[m HEAD@{23}: pull: Fast-forward
+[33m646193d[m HEAD@{24}: checkout: moving from Rix to development
+[33m1079ffb[m HEAD@{25}: commit: froget password done
+[33m114d62f[m HEAD@{26}: commit: login and signup completed
+[33mf8fd2db[m HEAD@{27}: commit: fixing bug in singin and login
+[33mbb1e73b[m HEAD@{28}: commit: adding toastify
+[33mc5edc78[m HEAD@{29}: commit: frontend and backend connected
+[33m8c95ab4[m HEAD@{30}: checkout: moving from development to Rix
+[33m646193d[m HEAD@{31}: commit: fixing the error
+[33m8c95ab4[m HEAD@{32}: merge Rix: Fast-forward
+[33md8fb099[m HEAD@{33}: checkout: moving from Rix to development
+[33m8c95ab4[m HEAD@{34}: commit: adding function in userCountroller
+[33me10193e[m HEAD@{35}: commit: adding helpers folder
+[33me1595f9[m HEAD@{36}: commit: backend login
+[33m2ec2e03[m HEAD@{37}: commit: adding in readme
+[33mbd58c85[m HEAD@{38}: commit (merge): merge
+[33mafa8185[m HEAD@{39}: checkout: moving from development to Rix
+[33md8fb099[m HEAD@{40}: pull: Fast-forward
+[33mc3810da[m HEAD@{41}: checkout: moving from Rix to development
+[33mafa8185[m HEAD@{42}: commit: adding number
+[33mc3810da[m HEAD@{43}: checkout: moving from development to Rix
+[33mc3810da[m HEAD@{44}: merge Rix: Fast-forward
+[33mec3266a[m HEAD@{45}: checkout: moving from Rix to development
+[33mc3810da[m HEAD@{46}: commit: backend setup start and nodemon used
+[33mec3266a[m HEAD@{47}: checkout: moving from development to Rix
+[33mec3266a[m HEAD@{48}: merge Rix: Fast-forward
+[33m3c92865[m HEAD@{49}: checkout: moving from Rix to development
+[33mec3266a[m HEAD@{50}: commit: bug fix
+[33m3c92865[m HEAD@{51}: merge main: Fast-forward
+[33m17467e0[m HEAD@{52}: checkout: moving from main to Rix
+[33m3c92865[m HEAD@{53}: merge development: Fast-forward
+[33meb36e8b[m HEAD@{54}: checkout: moving from development to main
+[33m3c92865[m HEAD@{55}: commit: change in readme file
+[33m17467e0[m HEAD@{56}: merge Rix: Fast-forward
+[33mdcfe58f[m HEAD@{57}: checkout: moving from Rix to development
+[33m17467e0[m HEAD@{58}: commit: frontend of login and signin completed
+[33mdcfe58f[m HEAD@{59}: checkout: moving from development to Rix
+[33mdcfe58f[m HEAD@{60}: merge Rix: Fast-forward
+[33m7e38bb9[m HEAD@{61}: checkout: moving from Rix to development
+[33mdcfe58f[m HEAD@{62}: commit: adding pages
+[33m29610ff[m HEAD@{63}: commit: Removed node_modules from repo and added to .gitignore
+[33m01d48ef[m HEAD@{64}: commit: frontend added and tailwind step 2 done
+[33m01adb7a[m HEAD@{65}: commit: adding frontend folder
+[33m7e38bb9[m HEAD@{66}: checkout: moving from development to Rix
+[33m7e38bb9[m HEAD@{67}: merge Rix: Fast-forward
+[33meb36e8b[m HEAD@{68}: checkout: moving from Rix to development
+[33m7e38bb9[m HEAD@{69}: commit: adding backend
+[33meb36e8b[m HEAD@{70}: checkout: moving from Rix to Rix
+[33meb36e8b[m HEAD@{71}: checkout: moving from main to Rix
+[33meb36e8b[m HEAD@{72}: clone: from https://github.com/Rixbroho/Sport_Booking.git
