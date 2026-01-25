@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import LogIn from './pages/LogIn';
-import SignIn from './pages/SignIn';
-import ForgetPassword from './pages/ForgetPassword';
-import UserPages from './pages/users';
-import ProtectedRoute from './protected/ProtectedRoute';
+import { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import LogIn from "./pages/LogIn";
+import SignIn from "./pages/SignIn";
+import ForgetPassword from "./pages/ForgetPassword";
+import UserPages from "./pages/users";
+import ProtectedRoute from "./protected/ProtectedRoute";
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -15,15 +21,15 @@ function AppContent() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
     if (token && userData) {
       try {
         setIsAuthenticated(true);
         setUser(JSON.parse(userData));
       } catch (error) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -40,11 +46,11 @@ function AppContent() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
-    navigate('/login');
+    navigate("/login");
   };
 
   if (isLoading) {
@@ -57,24 +63,33 @@ function AppContent() {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route
-        path="/"
+        path="/login"
         element={
-          isAuthenticated ? (
-            <div className="min-h-screen bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-              <h1 className="text-white text-4xl">Welcome {user?.username}</h1>
-            </div>
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          <LogIn
+            onSwitchToSignup={() => navigate("/register")}
+            onLogin={handleLogin}
+          />
         }
       />
-      <Route path="/login" element={<LogIn onSwitchToSignup={() => navigate('/register')} onLogin={handleLogin} />} />
-      <Route path="/register" element={<SignIn onSwitchToLogin={() => navigate('/login')} isAuthenticated={isAuthenticated} />} />
+      <Route
+        path="/register"
+        element={
+          <SignIn
+            onSwitchToLogin={() => navigate("/login")}
+            isAuthenticated={isAuthenticated}
+          />
+        }
+      />
       <Route path="/forget-password" element={<ForgetPassword />} />
       <Route
         path="/dashboard"
-        element={<ProtectedRoute element={<UserPages user={user} onLogout={handleLogout} />} />}
+        element={
+          <ProtectedRoute
+            element={<UserPages user={user} onLogout={handleLogout} />}
+          />
+        }
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
