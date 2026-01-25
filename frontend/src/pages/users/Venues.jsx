@@ -90,7 +90,7 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden md:ml-64">
         {/* Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+        <header className="fixed top-0 right-0 left-0 h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 md:left-64 z-40">
           <h2 className="text-2xl font-bold text-gray-800">Venues</h2>
 
           <div className="flex items-center gap-6">
@@ -122,7 +122,7 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
         </header>
 
         {/* Venues Content */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-8 pt-28">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVenues.map((venue) => (
               <div
