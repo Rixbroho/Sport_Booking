@@ -110,7 +110,7 @@ const UserDashboard = ({
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden md:ml-64">
         {/* Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+        <header className="fixed top-0 right-0 left-0 h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 md:left-64 z-40">
           <h2 className="text-2xl font-bold text-gray-800">
             {activeTab} Overview
           </h2>
@@ -146,7 +146,7 @@ const UserDashboard = ({
         </header>
 
         {/* Dashboard Body */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-8 pt-28">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             {stats.map((stat, idx) => (
@@ -244,7 +244,10 @@ const UserDashboard = ({
                   <p className="text-emerald-100 text-sm mb-6">
                     Ready for your next game? Find the best slots near you.
                   </p>
-                  <button className="w-full bg-white text-emerald-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all">
+                  <button
+                    onClick={() => handleTabChange("Venues")}
+                    className="w-full bg-white text-emerald-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all"
+                  >
                     <Plus size={20} /> New Booking
                   </button>
                 </div>
@@ -257,7 +260,10 @@ const UserDashboard = ({
                   Quick Shortcuts
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <button className="p-3 bg-gray-50 rounded-2xl text-center hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                  <button
+                    onClick={() => handleTabChange("Venues")}
+                    className="p-3 bg-gray-50 rounded-2xl text-center hover:bg-emerald-50 hover:text-emerald-600 transition-all"
+                  >
                     <MapPin size={20} className="mx-auto mb-2" />
                     <span className="text-xs font-bold">Nearby</span>
                   </button>

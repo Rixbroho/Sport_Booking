@@ -27,6 +27,7 @@ const Profile = ({ user, onLogout, setCurrentPage }) => {
 
   const handleSaveProfile = () => {
     setIsEditing(false);
+    alert("Profile updated successfully!");
     // Here you would typically make an API call to save the profile
   };
 
