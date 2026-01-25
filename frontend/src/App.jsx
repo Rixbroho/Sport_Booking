@@ -5,15 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import LogIn from './pages/LogIn';
 import SignIn from './pages/SignIn';
 import ForgetPassword from './pages/ForgetPassword';
-<<<<<<< HEAD
-import AdminDashboard from './pages/AdminDashboard';
-import UserProfile from './pages/UserProfile';
-import AdminProfile from './pages/UserProfile';
-import Users from './pages/User';
-=======
 import UserPages from './pages/users';
 import ProtectedRoute from './protected/ProtectedRoute';
->>>>>>> development
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,18 +84,6 @@ function AppContent() {
 function App() {
   return (
     <Router>
-<<<<<<< HEAD
-      <Routes>
-        <Route path="/" element={<div>HomePage</div>} />
-        <Route path="/Login" element={<LogIn/>} />
-        <Route path="/SignIn" element={<SignIn/>} />
-        <Route path="/ForgetPassword" element={<ForgetPassword/>} />
-        <Route path="/adminDashboard" element={<AdminDashboard/>} />
-         <Route path="/AdminProfile" element={<AdminProfile/>} />
-          <Route path="/Users" element={<Users/>} />
-        
-      </Routes>
-=======
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -117,7 +98,6 @@ function App() {
         style={{ zIndex: 9999 }}
       />
       <AppContent />
->>>>>>> development
     </Router>
   );
 }
