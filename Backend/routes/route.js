@@ -1,23 +1,33 @@
-const express = require('express').Router();
-const multer=require("multer");
-const upload=multer();
+const express = require("express");
+const router = express.Router();
+const multer = require("multer");
+const upload = multer();
 
-const{getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
-    logInUser,getMe,forgotPassword,resetPassword
-}=require("../controllers/userController");
+const {
+  getAllUser,
+  addUser,
+  getUsersById,
+  getActiveUsers,
+  updateUser,
+  deleteUser,
+  logInUser,
+  getMe,
+  forgotPassword,
+  resetPassword,
+} = require("../controllers/userController");
 
 const authGuard = require("../helpers/authguagrd");
 const isAdmin = require("../helpers/isAdmin");
 
-express.post("/user",upload.none(),addUser)
-express.get("/me",authGuard,getMe)
-express.post("/forgotpassword",forgotPassword)
-express.post("/resetpassword",resetPassword)
-express.get("/getalluser",authGuard,isAdmin,getAllUser)
-express.get("/getusersbyid/:id",authGuard,isAdmin,getUsersById)
-express.get("/getactiveusers",authGuard,getActiveUsers)
-express.put("/updateuserbyid/:id",authGuard,isAdmin,updateUser)
-express.delete("/deleteuserbyid/:id",authGuard,isAdmin,deleteUser)
-express.post("/loginuser",logInUser)
+router.post("/user", upload.none(), addUser);
+router.get("/me", authGuard, getMe);
+router.post("/forgotpassword", forgotPassword);
+router.post("/resetpassword", resetPassword);
+router.get("/getalluser", authGuard, isAdmin, getAllUser);
+router.get("/getusersbyid/:id", authGuard, isAdmin, getUsersById);
+router.get("/getactiveusers", authGuard, getActiveUsers);
+router.put("/updateuserbyid/:id", authGuard, isAdmin, updateUser);
+router.delete("/deleteuserbyid/:id", authGuard, isAdmin, deleteUser);
+router.post("/loginuser", logInUser);
 
-module.exports=express;
+module.exports = router;

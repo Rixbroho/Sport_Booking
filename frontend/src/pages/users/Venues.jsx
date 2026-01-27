@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
-import { Search, MapPin, Phone, Mail, Star, Users, Clock, AlertCircle } from 'lucide-react';
-import Nav from '../components/Nav';
+import React, { useState } from "react";
+import {
+  Search,
+  MapPin,
+  Phone,
+  Mail,
+  Star,
+  Users,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
+import Nav from "../components/Nav";
 
 const Venues = ({ user, onLogout, setCurrentPage }) => {
-  const [activeNavTab, setActiveNavTab] = useState('Venues');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [activeNavTab, setActiveNavTab] = useState("Venues");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleNavTabChange = (tab) => {
     setActiveNavTab(tab);
@@ -14,78 +23,82 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
   const [venues] = useState([
     {
       id: 1,
-      name: 'Champions Arena',
-      location: 'Downtown Sports Complex',
-      type: 'Football',
+      name: "Champions Arena",
+      location: "Downtown Sports Complex",
+      type: "Football",
       rating: 4.8,
-      price: '$45/hour',
-      availability: 'Available',
-      contact: '+1-234-567-8900',
-      email: 'champions@sports.com',
-      image: '🏟️'
+      price: "$45/hour",
+      availability: "Available",
+      contact: "+1-234-567-8900",
+      email: "champions@sports.com",
+      image: "🏟️",
     },
     {
       id: 2,
-      name: 'Green Valley Turf',
-      location: 'Riverside Arena',
-      type: 'Basketball',
+      name: "Green Valley Turf",
+      location: "Riverside Arena",
+      type: "Basketball",
       rating: 4.5,
-      price: '$50/hour',
-      availability: 'Available',
-      contact: '+1-234-567-8901',
-      email: 'greenvalley@sports.com',
-      image: '🏀'
+      price: "$50/hour",
+      availability: "Available",
+      contact: "+1-234-567-8901",
+      email: "greenvalley@sports.com",
+      image: "🏀",
     },
     {
       id: 3,
-      name: 'Elite Sports Zone',
-      location: 'Central Hub',
-      type: 'Cricket',
+      name: "Elite Sports Zone",
+      location: "Central Hub",
+      type: "Cricket",
       rating: 4.6,
-      price: '$60/hour',
-      availability: 'Booked',
-      contact: '+1-234-567-8902',
-      email: 'elite@sports.com',
-      image: '🏏'
+      price: "$60/hour",
+      availability: "Booked",
+      contact: "+1-234-567-8902",
+      email: "elite@sports.com",
+      image: "🏏",
     },
     {
       id: 4,
-      name: 'Sunset Park Courts',
-      location: 'West End',
-      type: 'Tennis',
+      name: "Sunset Park Courts",
+      location: "West End",
+      type: "Tennis",
       rating: 4.7,
-      price: '$40/hour',
-      availability: 'Available',
-      contact: '+1-234-567-8903',
-      email: 'sunset@sports.com',
-      image: '🎾'
+      price: "$40/hour",
+      availability: "Available",
+      contact: "+1-234-567-8903",
+      email: "sunset@sports.com",
+      image: "🎾",
     },
   ]);
 
-  const filteredVenues = venues.filter(venue =>
-    venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venue.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venue.type.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredVenues = venues.filter(
+    (venue) =>
+      venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      venue.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      venue.type.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Navigation Sidebar */}
-      <Nav activeTab={activeNavTab} setActiveTab={handleNavTabChange} onLogout={onLogout} />
+      <Nav
+        activeTab={activeNavTab}
+        setActiveTab={handleNavTabChange}
+        onLogout={onLogout}
+      />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        
+      <main className="flex-1 flex flex-col overflow-hidden md:ml-64">
         {/* Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+        <header className="fixed top-0 right-0 left-0 h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 md:left-64 z-40">
           <h2 className="text-2xl font-bold text-gray-800">Venues</h2>
-          
+
           <div className="flex items-center gap-6">
             <div className="relative hidden sm:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Search venues..." 
+              <input
+                type="text"
+                placeholder="Search venues..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 w-64 transition-all"
@@ -93,42 +106,62 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
             </div>
             <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
               <div className="text-right">
-                <p className="text-sm font-bold text-gray-800">{user?.username}</p>
+                <p className="text-sm font-bold text-gray-800">
+                  {user?.username}
+                </p>
                 <p className="text-xs text-gray-500">{user?.role}</p>
               </div>
               <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
-                {user?.username?.split(' ').map(n => n[0]).join('') || 'U'}
+                {user?.username
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("") || "U"}
               </div>
             </div>
           </div>
         </header>
 
         {/* Venues Content */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-8 pt-28">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVenues.map((venue) => (
-              <div key={venue.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all overflow-hidden">
+              <div
+                key={venue.id}
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all overflow-hidden"
+              >
                 {/* Header */}
-                <div className={`h-20 flex items-center justify-center text-6xl ${venue.availability === 'Available' ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+                <div
+                  className={`h-20 flex items-center justify-center text-6xl ${venue.availability === "Available" ? "bg-emerald-50" : "bg-amber-50"}`}
+                >
                   {venue.image}
                 </div>
-                
+
                 <div className="p-6">
                   {/* Title and Rating */}
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-800">{venue.name}</h3>
+                      <h3 className="text-lg font-bold text-gray-800">
+                        {venue.name}
+                      </h3>
                       <p className="text-sm text-gray-500">{venue.type}</p>
                     </div>
                     <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
-                      <Star size={14} className="text-yellow-500 fill-yellow-500" />
-                      <span className="text-sm font-bold text-yellow-700">{venue.rating}</span>
+                      <Star
+                        size={14}
+                        className="text-yellow-500 fill-yellow-500"
+                      />
+                      <span className="text-sm font-bold text-yellow-700">
+                        {venue.rating}
+                      </span>
                     </div>
                   </div>
 
                   {/* Location */}
                   <div className="flex items-start gap-2 mb-4 text-gray-700">
-                    <MapPin size={16} className="text-emerald-500 mt-1 flex-shrink-0" />
+                    <MapPin
+                      size={16}
+                      className="text-emerald-500 mt-1 flex-shrink-0"
+                    />
                     <p className="text-sm">{venue.location}</p>
                   </div>
 
@@ -146,13 +179,17 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
 
                   {/* Price and Availability */}
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-bold text-emerald-600">{venue.price}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                      venue.availability === 'Available' 
-                        ? 'bg-emerald-100 text-emerald-700' 
-                        : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {venue.availability === 'Available' ? '✓' : '⏱'}
+                    <span className="text-lg font-bold text-emerald-600">
+                      {venue.price}
+                    </span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                        venue.availability === "Available"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {venue.availability === "Available" ? "✓" : "⏱"}
                       {venue.availability}
                     </span>
                   </div>
@@ -169,8 +206,12 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
           {filteredVenues.length === 0 && (
             <div className="flex flex-col items-center justify-center h-96 text-center">
               <MapPin size={64} className="text-gray-300 mb-4" />
-              <h3 className="text-2xl font-bold text-gray-600 mb-2">No Venues Found</h3>
-              <p className="text-gray-500">Try adjusting your search criteria</p>
+              <h3 className="text-2xl font-bold text-gray-600 mb-2">
+                No Venues Found
+              </h3>
+              <p className="text-gray-500">
+                Try adjusting your search criteria
+              </p>
             </div>
           )}
         </div>
