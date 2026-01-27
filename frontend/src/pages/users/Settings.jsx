@@ -13,6 +13,12 @@ import Nav from "../components/Nav";
 const Settings = ({ user, onLogout, setCurrentPage }) => {
   const [activeNavTab, setActiveNavTab] = useState("Settings");
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [notifications, setNotifications] = useState({
     bookingReminders: true,
     promotions: false,
@@ -29,6 +35,25 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
     setNotifications({
       ...notifications,
       [key]: !notifications[key],
+    });
+  };
+
+  const handlePasswordChange = () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+    // API call would go here
+    alert("Password changed successfully!");
+    setShowPasswordModal(false);
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     });
   };
 
@@ -183,7 +208,10 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                       </div>
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold text-sm">
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold text-sm"
+                  >
                     Update Password
                   </button>
                 </div>
@@ -230,13 +258,106 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                 </button>
 
                 {/* Delete Account */}
-                <button className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-semibold">
+                <button
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Are you sure you want to delete your account? This cannot be undone.",
+                      )
+                    ) {
+                      alert(
+                        "Account deletion requested. This feature will be implemented soon.",
+                      );
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-semibold"
+                >
                   Delete Account
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Change Password Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6">
+                Change Password
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        currentPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        newPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordChange}
+                  className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold"
+                >
+                  Change Password
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

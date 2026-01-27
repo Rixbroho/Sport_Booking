@@ -53,6 +53,9 @@ const Bookings = ({ user, onLogout, setCurrentPage }) => {
   const [filter, setFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeNavTab, setActiveNavTab] = useState("Bookings");
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Handle navigation tab changes
   const handleNavTabChange = (tab) => {
@@ -78,6 +81,25 @@ const Bookings = ({ user, onLogout, setCurrentPage }) => {
 
   const handleDeleteBooking = (id) => {
     setBookings(bookings.filter((booking) => booking.id !== id));
+  };
+
+  const handleEditBooking = (booking) => {
+    setEditingId(booking.id);
+    setEditData({ ...booking });
+    setShowEditModal(true);
+  };
+
+  const handleSaveBooking = () => {
+    if (editData) {
+      setBookings(
+        bookings.map((booking) =>
+          booking.id === editingId ? editData : booking,
+        ),
+      );
+      setShowEditModal(false);
+      setEditingId(null);
+      setEditData(null);
+    }
   };
 
   return (
@@ -245,7 +267,10 @@ const Bookings = ({ user, onLogout, setCurrentPage }) => {
 
                     {/* Action Buttons */}
                     <div className="flex gap-3">
-                      <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-semibold">
+                      <button
+                        onClick={() => handleEditBooking(booking)}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-semibold"
+                      >
                         <Edit2 size={16} />
                         Edit
                       </button>
@@ -270,12 +295,86 @@ const Bookings = ({ user, onLogout, setCurrentPage }) => {
               <p className="text-gray-500 mb-6">
                 You don't have any bookings matching your filters.
               </p>
-              <button className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all">
+              <button
+                onClick={() => handleNavTabChange("Venues")}
+                className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all"
+              >
                 Book a Turf Now
               </button>
             </div>
           )}
         </div>
+
+        {/* Edit Booking Modal */}
+        {showEditModal && editData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6">
+                Edit Booking
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Date
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.date}
+                    onChange={(e) =>
+                      setEditData({ ...editData, date: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Time
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.time}
+                    onChange={(e) =>
+                      setEditData({ ...editData, time: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Players
+                  </label>
+                  <input
+                    type="number"
+                    value={editData.players}
+                    onChange={(e) =>
+                      setEditData({
+                        ...editData,
+                        players: parseInt(e.target.value),
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveBooking}
+                  className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
