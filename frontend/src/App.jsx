@@ -13,6 +13,7 @@ import SignIn from "./pages/SignIn";
 import ForgetPassword from "./pages/ForgetPassword";
 import UserPages from "./pages/users";
 import ProtectedRoute from "./protected/ProtectedRoute";
+import AdminDashboard from "./pages/admin/AdminDashboard"; // Updated import path
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -43,6 +44,11 @@ function AppContent() {
   const handleLogin = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
+    if (userData.role === "admin") {
+      navigate("/admin-dashboard");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   const handleLogout = () => {
@@ -88,6 +94,14 @@ function AppContent() {
         element={
           <ProtectedRoute
             element={<UserPages user={user} onLogout={handleLogout} />}
+          />
+        }
+      />
+      <Route
+        path="/admindashboard"
+        element={
+          <ProtectedRoute
+            element={<AdminDashboard />} // AdminDashboard includes the "Venues" tab
           />
         }
       />
