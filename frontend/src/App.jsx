@@ -109,7 +109,7 @@ function AppContent() {
         path="/admindashboard"
         element={
           <ProtectedRoute
-            element={<AdminDashboard />}
+            element={<AdminDashboard onLogout={handleLogout} />}
           />
         }
       />

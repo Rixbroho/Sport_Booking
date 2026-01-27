@@ -10,7 +10,7 @@ import {
 import UserBookingSetting from "./UserBookingSetting";
 import VenueManagement from "./VenueManagement";
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState("Dashboard");
 
   useEffect(() => {
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
       <AdminNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onLogout={() => console.log("Admin logged out")} // Replace with actual logout logic
+        onLogout={onLogout}
       />
       <main className="flex-1 p-6 ml-64"> {/* Added ml-64 to account for AdminNav width */}
         <header className="mb-6">
