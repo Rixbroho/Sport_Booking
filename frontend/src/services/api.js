@@ -49,5 +49,6 @@ export const resetPassword = (email, newPassword, resetToken) =>
   });
 
 export const getMe = () => API.get('/user/me');
+export const getAllUsers = () => API.get("/user/getalluser");
 
 export default API;
