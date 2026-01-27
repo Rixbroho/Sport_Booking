@@ -49,5 +49,15 @@ export const resetPassword = (email, newPassword, resetToken) =>
   });
 
 export const getMe = () => API.get('/user/me');
+export const getAllUsers = () => API.get("/user/getalluser");
 
-export default API;
+// Admin Settings API calls
+export const updateUserProfile = (userId, userData) =>
+  API.put(`/user/updateuserbyid/${userId}`, userData);
+
+export const getAllUsers = () => API.get('/user/getalluser');
+
+export const getUserById = (userId) => API.get(`/user/getusersbyid/${userId}`);
+
+export const deleteUser = (userId) => API.delete(`/user/deleteuserbyid/${userId}`);
+
