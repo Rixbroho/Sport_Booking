@@ -8,12 +8,15 @@ import {
 } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+// 1. Import your Home component
+import Home from "./pages/users/Home"; 
 import LogIn from "./pages/LogIn";
 import SignIn from "./pages/SignIn";
 import ForgetPassword from "./pages/ForgetPassword";
 import UserPages from "./pages/users";
 import ProtectedRoute from "./protected/ProtectedRoute";
-import AdminDashboard from "./pages/admin/AdminDashboard"; // Updated import path
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -44,8 +47,9 @@ function AppContent() {
   const handleLogin = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
+    // Note: ensure these paths match your Route definitions below
     if (userData.role === "admin") {
-      navigate("/admin-dashboard");
+      navigate("/admindashboard");
     } else {
       navigate("/dashboard");
     }
@@ -56,20 +60,22 @@ function AppContent() {
     localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
-    navigate("/login");
+    navigate("/"); // Redirect back to Home on logout
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-emerald-400 to-green-600 flex items-center justify-center">
-        <div className="text-white text-2xl">Loading...</div>
+      <div className="min-h-screen bg-emerald-500 flex items-center justify-center">
+        <div className="text-white text-2xl animate-pulse">Loading TurfTime...</div>
       </div>
     );
   }
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* 2. Set Home as the default root page */}
+      <Route path="/" element={<Home />} />
+
       <Route
         path="/login"
         element={
@@ -89,6 +95,7 @@ function AppContent() {
         }
       />
       <Route path="/forget-password" element={<ForgetPassword />} />
+      
       <Route
         path="/dashboard"
         element={
@@ -97,15 +104,18 @@ function AppContent() {
           />
         }
       />
+      
       <Route
         path="/admindashboard"
         element={
           <ProtectedRoute
-            element={<AdminDashboard />} // AdminDashboard includes the "Venues" tab
+            element={<AdminDashboard />}
           />
         }
       />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+
+      {/* 3. Global fallback: If user enters a wrong URL, take them home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
@@ -115,16 +125,8 @@ function App() {
     <Router>
       <ToastContainer
         position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
+        autoClose={3000}
         theme="light"
-        style={{ zIndex: 9999 }}
       />
       <AppContent />
     </Router>
