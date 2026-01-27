@@ -1,33 +1,31 @@
 import React from "react";
 import {
   LayoutDashboard,
+  Users,
   Calendar,
-  MapPin,
-  User,
   Settings,
   LogOut,
+  MapPin,
 } from "lucide-react";
 
-const Nav = ({ activeTab, setActiveTab, onLogout }) => {
-  const navItems = ["Dashboard", "Bookings", "Venues", "Profile", "Settings"];
+const AdminNav = ({ activeTab, setActiveTab, onLogout }) => {
+  const navItems = ["Dashboard", "Users", "Bookings", "Venues", "Settings"];
   const icons = {
     Dashboard: LayoutDashboard,
+    Users: Users,
     Bookings: Calendar,
     Venues: MapPin,
-    Profile: User,
     Settings: Settings,
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-gray-800 text-white flex flex-col">
       {/* Logo Section */}
       <div className="p-8 flex items-center gap-3">
         <div className="bg-emerald-500 p-2 rounded-lg">
           <LayoutDashboard className="text-white w-6 h-6" />
         </div>
-        <span className="text-2xl font-bold bg-linear-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-          TurfTime
-        </span>
+        <span className="text-2xl font-bold">Admin Panel</span>
       </div>
 
       {/* Navigation Items */}
@@ -40,10 +38,10 @@ const Nav = ({ activeTab, setActiveTab, onLogout }) => {
             <button
               key={item}
               onClick={() => setActiveTab(item)}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
                 isActive
-                  ? "bg-emerald-50 text-emerald-600 border-r-4 border-emerald-500"
-                  : "text-gray-500 hover:bg-gray-100"
+                  ? "bg-emerald-600 text-white"
+                  : "text-gray-400 hover:bg-gray-700"
               }`}
             >
               <Icon size={20} />
@@ -54,10 +52,10 @@ const Nav = ({ activeTab, setActiveTab, onLogout }) => {
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-gray-100">
+      <div className="p-4 border-t border-gray-700">
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-all"
+          className="w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-600 rounded-lg transition-all"
         >
           <LogOut size={20} />
           <span className="font-semibold">Logout</span>
@@ -65,6 +63,6 @@ const Nav = ({ activeTab, setActiveTab, onLogout }) => {
       </div>
     </aside>
   );
-};  
+};
 
-export default Nav;
+export default AdminNav;
