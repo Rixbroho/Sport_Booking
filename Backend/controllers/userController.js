@@ -150,7 +150,7 @@ const logInUser=async(req,res)=>{
 
         const token=jwt.sign(
             {
-                // id:user.id,
+                id:user.id,
                 role:user.role,
                 username:user.username,
                 email:user.email
@@ -175,9 +175,23 @@ const logInUser=async(req,res)=>{
 }
 
 const getMe = async (req, res) => {
-  const id=req.user.id
   try {
+    const id = req.user?.id;
+    if (!id) {
+      return res.status(401).json({
+        success: false,
+        message: "User ID not found in token"
+      });
+    }
+    
     const user = await User.findByPk(id)
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
     return res.json({ 
         success:true,
         user: { 
