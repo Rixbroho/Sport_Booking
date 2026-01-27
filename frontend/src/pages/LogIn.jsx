@@ -41,7 +41,13 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
         localStorage.setItem("user", JSON.stringify(response.data.user));
         toast.success("Login successful!");
         onLogin(response.data.user);
-        navigate("/dashboard");
+
+        // Navigate based on user role
+        if (response.data.user.role === "admin") {
+          navigate("/admindashboard");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error) {
       toast.error(
