@@ -65,6 +65,6 @@ const Nav = ({ activeTab, setActiveTab, onLogout }) => {
       </div>
     </aside>
   );
-};
+};  
 
 export default Nav;
