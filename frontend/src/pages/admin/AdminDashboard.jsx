@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import UserBookingSetting from "./UserBookingSetting";
 import VenueManagement from "./VenueManagement";
+import AdminSetting from "./AdminSetting";
 
 const AdminDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -67,7 +68,7 @@ const AdminDashboard = ({ onLogout }) => {
       case "Venues":
         return <VenueManagement />; // Ensure this renders the VenueManagement component
       case "Settings":
-        return <p>Update admin settings here.</p>;
+        return <AdminSetting />; // Use the AdminSetting component
       default:
         return <p>Content not found.</p>;
     }
