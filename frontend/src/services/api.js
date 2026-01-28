@@ -62,6 +62,8 @@ export const deleteUser = (userId) => API.delete(`/user/deleteuserbyid/${userId}
 
 export const createVenue = (venueData) =>
   API.post("/venue", venueData);
+export const updateVenue = (id, venueData) => API.put(`/venue/${id}`, venueData);
+export const deleteVenue = (id) => API.delete(`/venue/${id}`);
 
 export const getAllVenues = () =>
   API.get("/venue");
