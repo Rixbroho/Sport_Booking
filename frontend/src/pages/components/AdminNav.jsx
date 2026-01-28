@@ -98,4 +98,4 @@ const AdminNav = ({ activeTab, setActiveTab, onLogout }) => {
   );
 };
 
-export default AdminNav;
+export default AdminNav;``
