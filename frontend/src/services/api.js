@@ -50,4 +50,20 @@ export const resetPassword = (email, newPassword, resetToken) =>
 
 export const getMe = () => API.get('/user/me');
 
-export default API;
+// Admin Settings API calls
+export const updateUserProfile = (userId, userData) =>
+  API.put(`/user/updateuserbyid/${userId}`, userData);
+
+export const getAllUsers = () => API.get('/user/getalluser');
+
+export const getUserById = (userId) => API.get(`/user/getusersbyid/${userId}`);
+
+export const deleteUser = (userId) => API.delete(`/user/deleteuserbyid/${userId}`);
+
+export const createVenue = (venueData) =>
+  API.post("/venue", venueData);
+export const updateVenue = (id, venueData) => API.put(`/venue/${id}`, venueData);
+export const deleteVenue = (id) => API.delete(`/venue/${id}`);
+
+export const getAllVenues = () =>
+  API.get("/venue");
