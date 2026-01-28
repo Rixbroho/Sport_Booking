@@ -6,7 +6,7 @@ import {
 import { createVenue, getAllVenues, updateVenue, deleteVenue } from "../../services/api"; 
 import { toast } from "react-toastify";
 
-const VenueManagement = ({ user }) => {
+const VenueManagement = () => {
   const [venues, setVenues] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);

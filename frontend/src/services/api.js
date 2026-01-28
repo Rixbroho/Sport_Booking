@@ -67,3 +67,18 @@ export const deleteVenue = (id) => API.delete(`/venue/${id}`);
 
 export const getAllVenues = () =>
   API.get("/venue");
+
+// Booking API calls
+export const createBooking = (bookingData) =>
+  API.post("/booking", bookingData);
+
+export const getUserBookings = () =>
+  API.get("/booking/user");
+
+export const getAllBookings = () =>
+  API.get("/booking");
+
+export const updateBookingStatus = (id, status) =>
+  API.put(`/booking/${id}/status`, { status });
+
+export default API;

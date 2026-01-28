@@ -1,113 +1,85 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Search,
-  Filter,
-  MapPin,
   Calendar,
   Clock,
   Users,
-  Trash2,
-  Edit2,
-  CheckCircle,
+  MapPin,
+  Loader2,
   AlertCircle,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
+import { toast } from "react-toastify";
 import Nav from "../components/Nav";
+import { getUserBookings } from "../../services/api";
 
 const Bookings = ({ user, onLogout, setCurrentPage }) => {
-  const [bookings, setBookings] = useState([
-    {
-      id: "BK-9921",
-      turf: "Champions Arena",
-      date: "Oct 24, 2024",
-      time: "18:00 - 19:00",
-      location: "Downtown Sports Complex",
-      players: 10,
-      status: "Confirmed",
-      price: "$45",
-      sport: "Football",
-    },
-    {
-      id: "BK-9925",
-      turf: "Green Valley Turf",
-      date: "Oct 28, 2024",
-      time: "20:00 - 21:00",
-      location: "Riverside Arena",
-      players: 8,
-      status: "Pending",
-      price: "$50",
-      sport: "Basketball",
-    },
-    {
-      id: "BK-9930",
-      turf: "Elite Sports Zone",
-      date: "Oct 30, 2024",
-      time: "19:00 - 20:00",
-      location: "Central Hub",
-      players: 12,
-      status: "Confirmed",
-      price: "$60",
-      sport: "Cricket",
-    },
-  ]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("all");
 
-  const [filter, setFilter] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeNavTab, setActiveNavTab] = useState("Bookings");
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        const response = await getUserBookings();
+        if (response.data.success) {
+          setBookings(response.data.bookings);
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+        toast.error("Failed to load bookings");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Handle navigation tab changes
-  const handleNavTabChange = (tab) => {
-    setActiveNavTab(tab);
-    if (tab === "Dashboard") {
-      setCurrentPage("dashboard");
-    } else if (tab === "Venues") {
-      setCurrentPage("venues");
-    } else if (tab === "Profile") {
-      setCurrentPage("profile");
-    } else if (tab === "Settings") {
-      setCurrentPage("settings");
+    fetchBookings();
+  }, []);
+
+  const getFilteredBookings = () => {
+    if (activeTab === "all") return bookings;
+    if (activeTab === "pending") return bookings.filter(b => b.status === "Pending");
+    if (activeTab === "confirmed") return bookings.filter(b => b.status === "Confirmed");
+    return bookings;
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "Pending":
+        return <AlertCircle size={20} className="text-amber-500" />;
+      case "Confirmed":
+        return <CheckCircle2 size={20} className="text-emerald-500" />;
+      case "Declined":
+        return <XCircle size={20} className="text-red-500" />;
+      default:
+        return null;
     }
   };
 
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesFilter = filter === "All" || booking.status === filter;
-    const matchesSearch =
-      booking.turf.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.id.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
-
-  const handleDeleteBooking = (id) => {
-    setBookings(bookings.filter((booking) => booking.id !== id));
-  };
-
-  const handleEditBooking = (booking) => {
-    setEditingId(booking.id);
-    setEditData({ ...booking });
-    setShowEditModal(true);
-  };
-
-  const handleSaveBooking = () => {
-    if (editData) {
-      setBookings(
-        bookings.map((booking) =>
-          booking.id === editingId ? editData : booking,
-        ),
-      );
-      setShowEditModal(false);
-      setEditingId(null);
-      setEditData(null);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Pending":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Confirmed":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "Declined":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
+
+  const filteredBookings = getFilteredBookings();
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Navigation Sidebar */}
       <Nav
-        activeTab={activeNavTab}
-        setActiveTab={handleNavTabChange}
+        activeTab="Bookings"
+        setActiveTab={(tab) => {
+          setCurrentPage(tab.toLowerCase());
+        }}
         onLogout={onLogout}
       />
 
@@ -117,264 +89,149 @@ const Bookings = ({ user, onLogout, setCurrentPage }) => {
         <header className="fixed top-0 right-0 left-0 h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 md:left-64 z-40">
           <h2 className="text-2xl font-bold text-gray-800">My Bookings</h2>
 
-          <div className="flex items-center gap-6">
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search bookings..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 w-64 transition-all"
-              />
+          <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
+            <div className="text-right">
+              <p className="text-sm font-bold text-gray-800">
+                {user?.username || "Guest"}
+              </p>
+              <p className="text-xs text-gray-500">{user?.role || "User"}</p>
             </div>
-            <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
-              <div className="text-right">
-                <p className="text-sm font-bold text-gray-800">
-                  {user?.username}
-                </p>
-                <p className="text-xs text-gray-500">{user?.role}</p>
-              </div>
-              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
-                {user?.username
-                  ?.split(" ")
-                  .map((n) => n[0])
-                  .join("") || "U"}
-              </div>
+            <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
+              {user?.username
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("") || "U"}
             </div>
           </div>
         </header>
 
-        {/* Booking Content */}
+        {/* Bookings Content */}
         <div className="flex-1 overflow-y-auto p-8 pt-28">
-          {/* Filter Section */}
-          <div className="flex gap-4 mb-8">
-            <button
-              onClick={() => setFilter("All")}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-                filter === "All"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white text-gray-700 border border-gray-200 hover:border-emerald-500"
-              }`}
-            >
-              All Bookings
-            </button>
-            <button
-              onClick={() => setFilter("Confirmed")}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-                filter === "Confirmed"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white text-gray-700 border border-gray-200 hover:border-emerald-500"
-              }`}
-            >
-              Confirmed
-            </button>
-            <button
-              onClick={() => setFilter("Pending")}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-                filter === "Pending"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-white text-gray-700 border border-gray-200 hover:border-emerald-500"
-              }`}
-            >
-              Pending
-            </button>
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6 border-b border-gray-200">
+            {["all", "pending", "confirmed"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-3 font-semibold transition-all capitalize border-b-2 ${
+                  activeTab === tab
+                    ? "text-emerald-600 border-emerald-500"
+                    : "text-gray-500 border-transparent hover:text-gray-700"
+                }`}
+              >
+                {tab === "all" && `All (${bookings.length})`}
+                {tab === "pending" && `Pending (${bookings.filter(b => b.status === "Pending").length})`}
+                {tab === "confirmed" && `Confirmed (${bookings.filter(b => b.status === "Confirmed").length})`}
+              </button>
+            ))}
           </div>
 
-          {/* Bookings Grid */}
-          {filteredBookings.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Content */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-96">
+              <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mb-4" />
+              <p className="text-gray-500 font-medium">Loading bookings...</p>
+            </div>
+          ) : filteredBookings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-96 text-center">
+              <Calendar size={64} className="text-gray-300 mb-4" />
+              <h3 className="text-2xl font-bold text-gray-600 mb-2">
+                {activeTab === "all" ? "No Bookings Yet" : `No ${activeTab} bookings`}
+              </h3>
+              <p className="text-gray-500">
+                {activeTab === "all"
+                  ? "Browse venues and make your first booking!"
+                  : `You don't have any ${activeTab} bookings.`}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
               {filteredBookings.map((booking) => (
                 <div
                   key={booking.id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all overflow-hidden"
+                  className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all"
                 >
-                  {/* Status Bar */}
-                  <div
-                    className={`h-1 ${booking.status === "Confirmed" ? "bg-emerald-500" : "bg-amber-500"}`}
-                  ></div>
-
                   <div className="p-6">
-                    {/* Header */}
+                    {/* Header with Status */}
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <p className="text-xs font-mono text-gray-400 mb-1">
-                          {booking.id}
-                        </p>
                         <h3 className="text-xl font-bold text-gray-800">
-                          {booking.turf}
+                          {booking.venueName}
                         </h3>
+                        <p className="text-sm text-gray-500">{booking.type}</p>
                       </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                          booking.status === "Confirmed"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-amber-100 text-amber-700"
-                        }`}
+                      <div
+                        className={`flex items-center gap-2 px-3 py-1 rounded-full border ${getStatusColor(
+                          booking.status
+                        )}`}
                       >
-                        {booking.status === "Confirmed" ? (
-                          <CheckCircle size={14} />
-                        ) : (
-                          <AlertCircle size={14} />
-                        )}
-                        {booking.status}
-                      </span>
+                        {getStatusIcon(booking.status)}
+                        <span className="font-semibold text-sm">{booking.status}</span>
+                      </div>
                     </div>
 
-                    {/* Details Grid */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <Calendar size={16} className="text-emerald-500" />
-                        <div>
-                          <p className="text-xs text-gray-500">Date</p>
-                          <p className="font-semibold">{booking.date}</p>
+                    {/* Booking Details Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 pb-4 border-b border-gray-100">
+                      {/* Date */}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                          <Calendar size={18} className="text-blue-500" />
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <Clock size={16} className="text-emerald-500" />
                         <div>
-                          <p className="text-xs text-gray-500">Time</p>
-                          <p className="font-semibold">{booking.time}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <MapPin size={16} className="text-emerald-500" />
-                        <div>
-                          <p className="text-xs text-gray-500">Location</p>
-                          <p className="font-semibold text-sm">
-                            {booking.location}
+                          <p className="text-xs text-gray-500 font-semibold">DATE</p>
+                          <p className="font-bold text-gray-800">
+                            {new Date(booking.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric"
+                            })}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <Users size={16} className="text-emerald-500" />
-                        <div>
-                          <p className="text-xs text-gray-500">Players</p>
-                          <p className="font-semibold">{booking.players}</p>
+
+                      {/* Time */}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-50 rounded-lg">
+                          <Clock size={18} className="text-purple-500" />
                         </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold">TIME</p>
+                          <p className="font-bold text-gray-800">{booking.time}</p>
+                        </div>
+                      </div>
+
+                      {/* Players */}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-50 rounded-lg">
+                          <Users size={18} className="text-green-500" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-semibold">PLAYERS</p>
+                          <p className="font-bold text-gray-800">{booking.players}</p>
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div>
+                        <p className="text-xs text-gray-500 font-semibold">PRICE</p>
+                        <p className="font-bold text-emerald-600 text-lg">{booking.price}</p>
                       </div>
                     </div>
 
-                    {/* Sport and Price */}
-                    <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">
-                        {booking.sport}
-                      </span>
-                      <span className="text-2xl font-bold text-emerald-600">
-                        {booking.price}
-                      </span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => handleEditBooking(booking)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-semibold"
-                      >
-                        <Edit2 size={16} />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBooking(booking.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all font-semibold"
-                      >
-                        <Trash2 size={16} />
-                        Cancel
-                      </button>
+                    {/* Location */}
+                    <div className="flex items-start gap-3">
+                      <MapPin size={18} className="text-emerald-500 mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-gray-500 font-semibold">LOCATION</p>
+                        <p className="text-gray-800">{booking.location}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-96 text-center">
-              <Calendar size={64} className="text-gray-300 mb-4" />
-              <h3 className="text-2xl font-bold text-gray-600 mb-2">
-                No Bookings Found
-              </h3>
-              <p className="text-gray-500 mb-6">
-                You don't have any bookings matching your filters.
-              </p>
-              <button
-                onClick={() => handleNavTabChange("Venues")}
-                className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all"
-              >
-                Book a Turf Now
-              </button>
-            </div>
           )}
         </div>
-
-        {/* Edit Booking Modal */}
-        {showEditModal && editData && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">
-                Edit Booking
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Date
-                  </label>
-                  <input
-                    type="text"
-                    value={editData.date}
-                    onChange={(e) =>
-                      setEditData({ ...editData, date: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Time
-                  </label>
-                  <input
-                    type="text"
-                    value={editData.time}
-                    onChange={(e) =>
-                      setEditData({ ...editData, time: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Players
-                  </label>
-                  <input
-                    type="number"
-                    value={editData.players}
-                    onChange={(e) =>
-                      setEditData({
-                        ...editData,
-                        players: parseInt(e.target.value),
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveBooking}
-                  className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
