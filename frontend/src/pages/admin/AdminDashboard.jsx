@@ -12,6 +12,7 @@ import {
 import UserBookingSetting from "./UserBookingSetting";
 import VenueManagement from "./VenueManagement";
 import AdminSetting from "./AdminSetting";
+import UsersPage from "./Users";
 
 const AdminDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -99,7 +100,7 @@ const AdminDashboard = ({ onLogout }) => {
           </div>
         );
       case "Users":
-        return <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">Manage users here.</div>;
+        return <UsersPage/>;
       case "Bookings":
         return <UserBookingSetting />;
       case "Venues":
