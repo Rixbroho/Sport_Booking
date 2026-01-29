@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express=require('express');
 const { sequelize,connectDB } = require('./database/db');
+const path = require('path');
 const app=express();
 const port=3000;
 const bookingRoutes = require("./routes/bookingRoute");
@@ -13,6 +14,10 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve static uploads folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/user/',require('./routes/route'));
 app.use('/api', require('./routes/venueRoute'));
 app.use("/api", bookingRoutes);

@@ -51,3 +51,57 @@ exports.updateBookingStatus = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Get dashboard stats
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const { sequelize } = require("../database/db");
+    const { Op } = require("sequelize");
+
+    // Get total bookings
+    const totalBookings = await Booking.count();
+
+    // Get bookings today (created on current date)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const bookingsToday = await Booking.count({
+      where: {
+        createdAt: {
+          [Op.gte]: today,
+          [Op.lt]: tomorrow
+        }
+      }
+    });
+
+    // Get pending bookings
+    const pendingBookings = await Booking.count({
+      where: { status: "Pending" }
+    });
+
+    // Calculate total revenue from confirmed bookings
+    const confirmedBookings = await Booking.findAll({
+      where: { status: "Confirmed" },
+      raw: true
+    });
+
+    const totalRevenue = confirmedBookings.reduce((sum, booking) => {
+      const price = parseInt(booking.price?.replace(/[^\d]/g, '') || 0);
+      return sum + price;
+    }, 0);
+
+    res.json({
+      success: true,
+      stats: {
+        totalBookings,
+        bookingsToday,
+        pendingBookings,
+        totalRevenue
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

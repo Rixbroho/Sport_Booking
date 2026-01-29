@@ -61,6 +61,40 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
     setIsModalOpen(true);
   };
 
+  const handleDateChange = (e) => {
+    const today = new Date();
+    const selectedDate = new Date(e.target.value);
+
+    // Ensure the selected date is strictly in the future
+    if (selectedDate <= today.setHours(0, 0, 0, 0)) {
+      toast.error("You cannot select a past or today's date.");
+      return;
+    }
+
+    setBookingData({ ...bookingData, date: e.target.value });
+  };
+
+  const predefinedTimeSlots = [
+    "08:00 AM - 09:00 AM",
+    "09:00 AM - 10:00 AM",
+    "10:00 AM - 11:00 AM",
+    "11:00 AM - 12:00 PM",
+    "12:00 PM - 01:00 PM",
+    "01:00 PM - 02:00 PM",
+    "02:00 PM - 03:00 PM",
+    "03:00 PM - 04:00 PM",
+    "04:00 PM - 05:00 PM",
+    "05:00 PM - 06:00 PM",
+    "06:00 PM - 07:00 PM",
+    "07:00 PM - 08:00 PM",
+    "08:00 PM - 09:00 PM",
+  ];
+
+  const handleTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    setBookingData({ ...bookingData, time: selectedTime });
+  };
+
   const handleConfirmBooking = async () => {
     if (!bookingData.date || !bookingData.time || !bookingData.players) {
       toast.warning("Please fill in all fields");
@@ -157,22 +191,30 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
                 {filteredVenues.map((venue) => (
                   <div
                     key={venue.id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all overflow-hidden"
+                    className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all overflow-hidden group"
                   >
                     {/* Header */}
                     <div
-                      className={`h-20 flex items-center justify-center text-6xl ${
+                      className={`h-40 flex items-center justify-center overflow-hidden ${
                         venue.availability === "Available" ? "bg-emerald-50" : "bg-amber-50"
                       }`}
                     >
-                      {venue.image || "🏟️"}
+                      {venue.image && venue.image.startsWith("/uploads") ? (
+                        <img
+                          src={`http://localhost:3000${venue.image}`}
+                          alt={venue.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="text-6xl">{venue.image || "🏟️"}</div>
+                      )}
                     </div>
 
                     <div className="p-6">
                       {/* Title and Rating */}
                       <div className="flex justify-between items-start mb-4">
                         <div className="max-w-[70%]">
-                          <h3 className="text-lg font-bold text-gray-800 truncate">
+                          <h3 className="text-lg font-bold text-gray-800 truncate group-hover:text-emerald-600 transition-colors">
                             {venue.name}
                           </h3>
                           <p className="text-sm text-gray-500">{venue.type}</p>
@@ -284,9 +326,8 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
                   <input
                     type="date"
                     value={bookingData.date}
-                    onChange={(e) =>
-                      setBookingData({ ...bookingData, date: e.target.value })
-                    }
+                    onChange={handleDateChange}
+                    min={new Date().toISOString().split("T")[0]} // Disable past dates
                     className="w-full p-3 bg-transparent outline-none"
                   />
                 </div>
@@ -299,15 +340,27 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
                 </label>
                 <div className="flex items-center bg-gray-50 rounded-lg px-3 border border-gray-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
                   <Clock size={18} className="text-emerald-500" />
-                  <input
-                    type="time"
+                  <select
                     value={bookingData.time}
-                    onChange={(e) =>
-                      setBookingData({ ...bookingData, time: e.target.value })
-                    }
-                    className="w-full p-3 bg-transparent outline-none"
-                  />
+                    onChange={handleTimeChange}
+                    disabled={!bookingData.date} // Ensure dropdown is enabled only when a valid date is selected
+                    className={`w-full p-3 bg-transparent outline-none text-gray-700 text-sm ${
+                      !bookingData.date ? "cursor-not-allowed opacity-50" : ""
+                    }`}
+                  >
+                    <option value="" disabled>
+                      Select a time slot
+                    </option>
+                    {predefinedTimeSlots.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {slot}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                {!bookingData.date && (
+                  <p className="text-xs text-red-500 mt-1">Please select a date first.</p>
+                )}
               </div>
 
               {/* Players Input */}

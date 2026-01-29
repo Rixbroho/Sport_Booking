@@ -9,6 +9,8 @@ import {
   ArrowUpRight,
   Bell
 } from "lucide-react";
+import { toast } from "react-toastify";
+import { getDashboardStats, getAllUsers, getAllBookings } from "../../services/api";
 import UserBookingSetting from "./UserBookingSetting";
 import VenueManagement from "./VenueManagement";
 import AdminSetting from "./AdminSetting";
@@ -16,18 +18,50 @@ import UsersPage from "./Users";
 
 const AdminDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [stats, setStats] = useState([
+    { label: "Total Users", value: "0", icon: Users, color: "text-emerald-600", bg: "bg-emerald-50", trend: "+0%" },
+    { label: "Bookings Today", value: "0", icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", trend: "+0%" },
+    { label: "Revenue", value: "₹0", icon: BarChart2, color: "text-amber-600", bg: "bg-amber-50", trend: "+0%" },
+    { label: "Pending Issues", value: "0", icon: Activity, color: "text-rose-600", bg: "bg-rose-50", trend: "Stable" },
+  ]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.title = `Admin - ${activeTab}`;
   }, [activeTab]);
 
-  // Data for the stat cards
-  const stats = [
-    { label: "Total Users", value: "120", icon: Users, color: "text-emerald-600", bg: "bg-emerald-50", trend: "+12%" },
-    { label: "Bookings Today", value: "45", icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", trend: "+5%" },
-    { label: "Revenue", value: "₹50,000", icon: BarChart2, color: "text-amber-600", bg: "bg-amber-50", trend: "+18%" },
-    { label: "Pending Issues", value: "5", icon: Activity, color: "text-rose-600", bg: "bg-rose-50", trend: "Stable" },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const [statsRes, usersRes] = await Promise.all([
+          getDashboardStats(),
+          getAllUsers()
+        ]);
+
+        if (statsRes?.data?.success && usersRes?.data?.success) {
+          const { totalBookings, bookingsToday, pendingBookings, totalRevenue } = statsRes.data.stats;
+          const totalUsers = usersRes.data.users?.length || 0;
+
+          setStats([
+            { label: "Total Users", value: totalUsers.toString(), icon: Users, color: "text-emerald-600", bg: "bg-emerald-50", trend: "+12%" },
+            { label: "Bookings Today", value: bookingsToday.toString(), icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", trend: "+5%" },
+            { label: "Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: BarChart2, color: "text-amber-600", bg: "bg-amber-50", trend: "+18%" },
+            { label: "Pending Issues", value: pendingBookings.toString(), icon: Activity, color: "text-rose-600", bg: "bg-rose-50", trend: "Stable" },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        toast.error("Failed to load dashboard stats");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeTab === "Dashboard") {
+      fetchStats();
+    }
+  }, [activeTab]);
 
   const renderContent = () => {
     switch (activeTab) {

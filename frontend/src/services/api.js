@@ -66,9 +66,25 @@ export const getUserById = (userId) => API.get(`/user/getusersbyid/${userId}`);
 
 export const deleteUser = (userId) => API.delete(`/user/deleteuserbyid/${userId}`);
 
-export const createVenue = (venueData) =>
-  API.post("/venue", venueData);
-export const updateVenue = (id, venueData) => API.put(`/venue/${id}`, venueData);
+export const createVenue = (venueData) => {
+  // Check if venueData is FormData (contains file)
+  if (venueData instanceof FormData) {
+    return API.post("/venue", venueData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+  }
+  return API.post("/venue", venueData);
+};
+
+export const updateVenue = (id, venueData) => {
+  // Check if venueData is FormData (contains file)
+  if (venueData instanceof FormData) {
+    return API.put(`/venue/${id}`, venueData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+  }
+  return API.put(`/venue/${id}`, venueData);
+};
 export const deleteVenue = (id) => API.delete(`/venue/${id}`);
 
 export const getAllVenues = () =>
@@ -86,5 +102,9 @@ export const getAllBookings = () =>
 
 export const updateBookingStatus = (id, status) =>
   API.put(`/booking/${id}/status`, { status });
+
+// Dashboard stats API
+export const getDashboardStats = () =>
+  API.get("/dashboard/stats");
 
 export default API;
