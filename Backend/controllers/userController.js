@@ -1,6 +1,8 @@
 const User=require("../models/userModel.js");
 const jwt=require("jsonwebtoken");
 const bcrypt=require("bcrypt");
+const crypto = require('crypto');
+const { sendResetEmail } = require('../helpers/emailService');
 
 const addUser=async(req,res)=>{
     try{
@@ -198,82 +200,102 @@ const getMe = async (req, res) => {
 
 
 const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Generate a 6-digit numeric OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+        const expires = Date.now() + 60 * 60 * 1000; // 1 hour
+
+        await user.update({ resetPasswordToken: hashedOtp, resetPasswordExpires: expires });
+
+        // Send email with OTP
+        try {
+            await sendResetEmail(user.email, otp, user.username);
+        } catch (emailError) {
+            // Rollback token fields if email fails
+            await user.update({ resetPasswordToken: null, resetPasswordExpires: null });
+            return res.status(500).json({ success: false, message: 'Error sending email', error: emailError.message });
+        }
+
+        return res.status(200).json({ success: true, message: 'OTP sent to email' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error sending OTP', error: error.message });
+    }
+};
+
+const verifyOtp = async (req, res) => {
   try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and OTP are required' });
     }
 
-    const user = await User.findOne({ where: { email } });
-    
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+
+    const user = await User.findOne({
+      where: {
+        email,
+        resetPasswordToken: hashedOtp,
+        resetPasswordExpires: { [require('sequelize').Op.gt]: Date.now() },
+      },
+    });
+
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    // Generate a reset token
-    const resetToken = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Password reset link sent to your email",
-      resetToken // In production, send this via email
-    });
+    return res.status(200).json({ success: true, message: 'OTP verified successfully' });
   } catch (error) {
-    return res.status(500).json({
-      message: "Error sending reset link",
-      error: error.message
-    });
+    return res.status(500).json({ message: 'Error verifying OTP', error: error.message });
   }
 };
 
 const resetPassword = async (req, res) => {
   try {
-    const { email, newPassword, resetToken } = req.body;
+    const { email, otp, password } = req.body;
 
-    if (!email || !newPassword || !resetToken) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+    if (!email || !otp || !password) {
+      return res.status(400).json({ success: false, message: 'Email, OTP and new password are required' });
     }
 
-    // Verify token
-    let decoded;
-    try {
-      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-    } catch (error) {
-      return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
-    }
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
 
-    // Find user
-    const user = await User.findOne({ where: { email } });
-    
+    const user = await User.findOne({
+      where: {
+        email,
+        resetPasswordToken: hashedOtp,
+        resetPasswordExpires: { [require('sequelize').Op.gt]: Date.now() },
+      },
+    });
+
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update password
-    await user.update({ password: hashedPassword });
+    await user.update({ password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null });
 
-    return res.status(200).json({
-      success: true,
-      message: "Password reset successfully"
-    });
+    return res.status(200).json({ success: true, message: 'Password has been reset' });
   } catch (error) {
-    return res.status(500).json({
-      message: "Error resetting password",
-      error: error.message
-    });
+    return res.status(500).json({ message: 'Error resetting password', error: error.message });
   }
 };
 
 module.exports={
     getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
-    logInUser,getMe,forgotPassword,resetPassword
+    logInUser,getMe,forgotPassword,verifyOtp,resetPassword
 }
 

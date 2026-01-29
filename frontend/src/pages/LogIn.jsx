@@ -24,7 +24,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
   };
 
   const handleForgotPassword = () => {
-    navigate("/forget-password");
+    navigate("/forgot-password");
   };
 
   const handleSubmit = async () => {
