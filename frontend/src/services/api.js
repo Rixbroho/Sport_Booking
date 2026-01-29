@@ -97,4 +97,8 @@ export const getAllBookings = () =>
 export const updateBookingStatus = (id, status) =>
   API.put(`/booking/${id}/status`, { status });
 
+// Dashboard stats API
+export const getDashboardStats = () =>
+  API.get("/dashboard/stats");
+
 export default API;

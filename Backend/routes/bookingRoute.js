@@ -10,5 +10,6 @@ router.get("/booking/user", authGuard, bookingController.getUserBookings);
 // Admin routes
 router.get("/booking", authGuard, isAdmin, bookingController.getAllBookings);
 router.put("/booking/:id/status", authGuard, isAdmin, bookingController.updateBookingStatus);
+router.get("/dashboard/stats", authGuard, isAdmin, bookingController.getDashboardStats);
 
 module.exports = router;
