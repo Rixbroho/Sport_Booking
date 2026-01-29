@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Trophy,
@@ -12,10 +12,33 @@ import {
   Menu,
   X
 } from "lucide-react";
+import { toast } from "react-toastify";
+import { getAllVenues } from "../../services/api";
 
 const Home = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [venues, setVenues] = useState([]);
+  const [loadingVenues, setLoadingVenues] = useState(true);
+
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        setLoadingVenues(true);
+        const response = await getAllVenues();
+        if (response?.data?.success) {
+          setVenues(response.data.venues || []);
+        }
+      } catch (error) {
+        console.error("Error fetching venues:", error);
+        toast.error("Failed to load venues");
+      } finally {
+        setLoadingVenues(false);
+      }
+    };
+
+    fetchVenues();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-emerald-100">
@@ -65,7 +88,7 @@ const Home = () => {
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 max-w-5xl mx-auto pb-20">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-emerald-50 text-xs md:text-sm font-bold mb-6 border border-white/20">
             <Activity className="w-4 h-4 text-emerald-300" />
-            <span>Over 500+ venues available now</span>
+            <span>{loadingVenues ? "Loading venues..." : `${venues.length} venues available now`}</span>
           </div>
           
           <h1 className="text-4xl sm:text-6xl lg:text-8xl font-extrabold text-white mb-6 leading-[1.1] tracking-tight">
@@ -117,9 +140,21 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          <VenuePreview image="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000" name="The Arena Center" type="Football" price="$45/hr" />
-          <VenuePreview image="https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=1000" name="Skyline Courts" type="Basketball" price="$30/hr" />
-          <VenuePreview image="https://images.unsplash.com/photo-1544105492-7f180391e93f?q=80&w=1000" name="Green Garden Turf" type="Cricket" price="$40/hr" />
+          {loadingVenues ? (
+            <div className="col-span-3 flex items-center justify-center">
+              <p className="text-gray-500">Loading venues...</p>
+            </div>
+          ) : (
+            (venues.slice(0, 3)).map((v) => (
+              <VenuePreview
+                key={v.id}
+                image={v.image}
+                name={v.name}
+                type={v.type}
+                price={v.price}
+              />
+            ))
+          )}
         </div>
       </section>
 
@@ -159,7 +194,11 @@ const StatCard = ({ icon, label, value, color }) => (
 const VenuePreview = ({ image, name, type, price }) => (
   <div className="group cursor-pointer">
     <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] mb-6 shadow-lg">
-      <img src={image} alt={name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+      {image && image.startsWith("/uploads") ? (
+        <img src={`http://localhost:3000${image}`} alt={name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+      ) : (
+        <div className="w-full h-full bg-emerald-50 flex items-center justify-center text-6xl">{image || "🏟️"}</div>
+      )}
       <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black text-emerald-700 uppercase tracking-wider shadow-sm">
         {type}
       </div>
