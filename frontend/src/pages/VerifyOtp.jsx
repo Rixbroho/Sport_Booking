@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { verifyOtp } from '../services/api';
+import { verifyOtp, forgotPassword } from '../services/api';
 
 const VerifyOtp = () => {
   const navigate = useNavigate();
@@ -10,15 +10,35 @@ const VerifyOtp = () => {
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [resendTimer, setResendTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
   useEffect(() => {
     // Get email from navigation state
     if (location.state?.email) {
       setEmail(location.state.email);
+      setCanResend(false);
+      setResendTimer(60);
     } else {
       // If no email in state, redirect back to forgot password
       navigate('/forgot-password');
     }
   }, [location, navigate]);
+
+  useEffect(() => {
+    if (canResend) return;
+    const id = setInterval(() => {
+      setResendTimer((t) => {
+        if (t <= 1) {
+          clearInterval(id);
+          setCanResend(true);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [canResend]);
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
@@ -50,103 +70,83 @@ const VerifyOtp = () => {
     navigate('/forgot-password');
   };
 
+  const handleResend = async () => {
+    if (!canResend) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await forgotPassword(email);
+      setMessage({ type: 'success', text: res.data.message || 'OTP resent' });
+      setCanResend(false);
+      setResendTimer(60);
+    } catch (err) {
+      setMessage({ type: 'error', text: err?.response?.data?.message || 'Failed to resend OTP' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{ maxWidth: 450, margin: '40px auto', padding: '30px', fontFamily: 'Arial, sans-serif' }}>
-      <h2 style={{ textAlign: 'center', color: '#333' }}>Verify OTP</h2>
-
-      <form onSubmit={handleVerifyOtp}>
-        <div style={{
-          marginBottom: 20,
-          padding: '12px',
-          backgroundColor: '#e8f4f8',
-          borderRadius: '4px',
-          borderLeft: '4px solid #0b6efd'
-        }}>
-          <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
-            Email: <strong>{email}</strong>
-          </p>
-          <button
-            type="button"
-            onClick={handleChangeEmail}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#0b6efd',
-              cursor: 'pointer',
-              fontSize: '12px',
-              textDecoration: 'underline',
-              padding: 0
-            }}
-          >
-            Change Email
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-8 text-white text-center">
+          <h1 className="text-3xl font-bold mb-1">Verify OTP</h1>
+          <p className="text-emerald-50">Enter the code sent to <span className="font-semibold">{email}</span></p>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>Enter 6-Digit OTP</label>
-          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#666' }}>
-            Check your email for the OTP code
-          </p>
-          <input
-            type="text"
-            value={otp}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-              setOtp(val);
-            }}
-            required
-            maxLength="6"
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginTop: 6,
-              boxSizing: 'border-box',
-              border: '2px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '24px',
-              letterSpacing: '8px',
-              textAlign: 'center',
-              fontWeight: 'bold'
-            }}
-            placeholder="000000"
-          />
-          <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#999' }}>
-            {otp.length}/6
-          </p>
-        </div>
+        <div className="p-8">
+          <form onSubmit={handleVerifyOtp} className="space-y-6">
+            <div className="bg-sky-50 p-3 rounded-lg border-l-4 border-sky-400">
+              <div className="text-sm text-sky-700">Email: <strong className="text-slate-800">{email}</strong></div>
+              <button type="button" onClick={handleChangeEmail} className="mt-2 text-xs text-sky-600 underline">Change Email</button>
+            </div>
 
-        <button
-          type="submit"
-          disabled={loading || otp.length !== 6}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: (loading || otp.length !== 6) ? '#ccc' : '#0b6efd',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: (loading || otp.length !== 6) ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? 'Verifying...' : 'Verify OTP'}
-        </button>
-      </form>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Enter 6-Digit OTP</label>
+              <p className="text-xs text-gray-500 mb-2">Check your email for the code. It expires in 1 hour.</p>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setOtp(val);
+                }}
+                required
+                maxLength="6"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-2xl tracking-widest text-center font-semibold"
+                placeholder="000000"
+                aria-label="One-time code"
+              />
+              <div className="text-xs text-gray-400 mt-2">{otp.length}/6</div>
+            </div>
 
-      {/* Messages */}
-      {message && (
-        <div style={{
-          marginTop: 20,
-          padding: 12,
-          borderRadius: '4px',
-          color: message.type === 'error' ? '#d32f2f' : '#2e7d32',
-          backgroundColor: message.type === 'error' ? '#ffebee' : '#e8f5e9',
-          border: `1px solid ${message.type === 'error' ? '#ef5350' : '#66bb6a'}`
-        }}>
-          {message.text}
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={loading || otp.length !== 6}
+                className={`flex-1 py-3 rounded-xl text-white font-bold ${loading || otp.length !== 6 ? 'bg-gray-300' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+              >
+                {loading ? 'Verifying...' : 'Verify OTP'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={!canResend || loading}
+                className={`px-4 py-3 rounded-xl font-medium ${canResend ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'bg-gray-100 text-gray-400'}`}
+              >
+                {canResend ? 'Resend' : `Resend (${resendTimer}s)`}
+              </button>
+            </div>
+          </form>
+
+          {message && (
+            <div className={`mt-4 p-3 rounded ${message.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+              {message.text}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
