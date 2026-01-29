@@ -186,11 +186,15 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
                   >
                     {/* Header */}
                     <div
-                      className={`h-20 flex items-center justify-center text-6xl ${
+                      className={`h-20 flex items-center justify-center text-6xl overflow-hidden ${
                         venue.availability === "Available" ? "bg-emerald-50" : "bg-amber-50"
                       }`}
                     >
-                      {venue.image || "🏟️"}
+                      {venue.image && venue.image.startsWith("/uploads") ? (
+                        <img src={`http://localhost:3000${venue.image}`} alt={venue.name} className="w-full h-full object-cover" />
+                      ) : (
+                        venue.image || "🏟️"
+                      )}
                     </div>
 
                     <div className="p-6">

@@ -2,10 +2,16 @@ const Venue = require("../models/venueModel");
 
 const createVenue = async (req, res) => {
   try {
-    const { name, location, type, price, rating, image } = req.body;
+    const { name, location, type, price, rating } = req.body;
 
     if (!name || !location || !type || !price) {
       return res.status(400).json({ message: "All fields required" });
+    }
+
+    // Handle image upload - use uploaded file path or fallback to emoji
+    let image = "🏟️";
+    if (req.files && req.files.length > 0) {
+      image = `/uploads/${req.files[0].filename}`;
     }
 
     const venue = await Venue.create({
@@ -13,7 +19,7 @@ const createVenue = async (req, res) => {
       location,
       type,
       price,
-      rating,
+      rating: rating || 5.0,
       image,
     });
 
@@ -39,12 +45,18 @@ const getAllVenues = async (req, res) => {
 const updateVenue = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, location, type, price, rating, image, availability } = req.body;
+    const { name, location, type, price, rating, availability } = req.body;
     
     const venue = await Venue.findByPk(id);
     if (!venue) return res.status(404).json({ message: "Venue not found" });
 
-    await venue.update({ name, location, type, price, rating, image, availability });
+    // Handle image upload - use new file path or keep existing
+    let updateData = { name, location, type, price, rating, availability };
+    if (req.files && req.files.length > 0) {
+      updateData.image = `/uploads/${req.files[0].filename}`;
+    }
+
+    await venue.update(updateData);
 
     res.json({ success: true, message: "Venue updated successfully", venue });
   } catch (error) {

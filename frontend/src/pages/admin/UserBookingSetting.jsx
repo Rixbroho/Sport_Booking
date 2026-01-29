@@ -2,25 +2,57 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Loader2, AlertCircle, MapPin, Calendar, Clock, Users } from "lucide-react";
 import { toast } from "react-toastify";
-import { getAllBookings, updateBookingStatus } from "../../services/api";
+import { getAllBookings, getUserBookings, updateBookingStatus } from "../../services/api";
 
 const UserBookingSetting = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
+  const storedUser = localStorage.getItem("user");
+  const currentUser = storedUser ? JSON.parse(storedUser) : null;
+
+  // Determine admin status robustly: prefer `user` object, fall back to decoding the JWT token payload.
+  const getRoleFromToken = () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return null;
+      const payload = token.split(".")[1];
+      if (!payload) return null;
+      const decoded = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+      return decoded.role || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const tokenRole = getRoleFromToken();
+  const isAdmin = (currentUser?.role || tokenRole || "").toString().toLowerCase() === "admin";
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const response = await getAllBookings();
-        if (response.data.success) {
+
+        // Decide which endpoint to call based on logged-in user role
+        const storedUser = localStorage.getItem("user");
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+        const response = isAdmin ? await getAllBookings() : await getUserBookings();
+
+        if (response?.data?.success) {
           setBookings(response.data.bookings);
         }
       } catch (error) {
         console.error("Error fetching bookings:", error);
-        toast.error("Failed to load bookings");
+        const status = error?.response?.status;
+        if (status === 403) {
+          toast.error("Access denied: admin privileges required to view all bookings.");
+        } else if (status === 401) {
+          toast.error("Unauthorized. Please log in.");
+        } else {
+          toast.error("Failed to load bookings");
+        }
       } finally {
         setLoading(false);
       }
@@ -30,10 +62,15 @@ const UserBookingSetting = () => {
   }, []);
 
   const handleStatusUpdate = async (bookingId, newStatus) => {
+    if (!isAdmin) {
+      toast.error("Access denied: admin privileges required to update booking status.");
+      return;
+    }
+
     try {
       setUpdating(bookingId);
       const response = await updateBookingStatus(bookingId, newStatus);
-      if (response.data.success) {
+      if (response?.data?.success) {
         setBookings(
           bookings.map((booking) =>
             booking.id === bookingId ? { ...booking, status: newStatus } : booking
@@ -43,7 +80,14 @@ const UserBookingSetting = () => {
       }
     } catch (error) {
       console.error("Error updating booking:", error);
-      toast.error("Failed to update booking");
+      const status = error?.response?.status;
+      if (status === 403) {
+        toast.error("Access denied: admin privileges required.");
+      } else if (status === 401) {
+        toast.error("Unauthorized. Please log in.");
+      } else {
+        toast.error("Failed to update booking");
+      }
     } finally {
       setUpdating(null);
     }

@@ -23,6 +23,8 @@ const VenueManagement = () => {
     rating: 5.0,
     image: "🏟️" 
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const fetchVenues = async () => {
     try {
@@ -44,6 +46,19 @@ const VenueManagement = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Open Modal for Editing
   const handleEditClick = (venue) => {
     setIsEditing(true);
@@ -56,6 +71,8 @@ const VenueManagement = () => {
       rating: venue.rating,
       image: venue.image || "🏟️"
     });
+    setImageFile(null);
+    setImagePreview(null);
     setIsModalOpen(true);
   };
 
@@ -83,11 +100,22 @@ const VenueManagement = () => {
 
     setLoading(true);
     try {
+      // Create FormData to handle file upload
+      const submitData = new FormData();
+      submitData.append("name", formData.name);
+      submitData.append("location", formData.location);
+      submitData.append("type", formData.type);
+      submitData.append("price", formData.price);
+      submitData.append("rating", formData.rating);
+      if (imageFile) {
+        submitData.append("image", imageFile);
+      }
+
       let response;
       if (isEditing) {
-        response = await updateVenue(currentVenueId, formData);
+        response = await updateVenue(currentVenueId, submitData);
       } else {
-        response = await createVenue(formData);
+        response = await createVenue(submitData);
       }
 
       if (response.data.success) {
@@ -107,6 +135,8 @@ const VenueManagement = () => {
     setIsEditing(false);
     setCurrentVenueId(null);
     setFormData({ name: "", location: "", type: "Football", price: "", rating: 5.0, image: "🏟️" });
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const filteredVenues = venues.filter(v => 
@@ -135,8 +165,12 @@ const VenueManagement = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredVenues.map((venue) => (
             <div key={venue.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden group relative">
-              <div className="h-28 bg-emerald-50 flex items-center justify-center text-5xl">
-                {venue.image || "🏟️"}
+              <div className="h-28 bg-emerald-50 flex items-center justify-center text-5xl overflow-hidden">
+                {venue.image && venue.image.startsWith("/uploads") ? (
+                  <img src={`http://localhost:3000${venue.image}`} alt={venue.name} className="w-full h-full object-cover" />
+                ) : (
+                  venue.image || "🏟️"
+                )}
                 {/* Edit/Delete Overlay */}
                 <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
@@ -185,6 +219,40 @@ const VenueManagement = () => {
             
             <div className="p-8 space-y-4">
               <div className="space-y-4">
+                {/* Image Upload */}
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase">Venue Image</label>
+                  <div className="mt-2">
+                    {imagePreview ? (
+                      <div className="relative w-full h-32 rounded-2xl overflow-hidden mb-3">
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(null);
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : formData.image && formData.image.startsWith("/uploads") ? (
+                      <div className="relative w-full h-32 rounded-2xl overflow-hidden mb-3">
+                        <img src={`http://localhost:3000${formData.image}`} alt="Current" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-32 bg-gray-100 rounded-2xl flex items-center justify-center text-4xl mb-3">
+                        {formData.image || "🏟️"}
+                      </div>
+                    )}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageChange}
+                      className="w-full p-4 bg-gray-50 rounded-2xl outline-none cursor-pointer"
+                    />
+                  </div>
+                </div>
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase">Venue Name</label>
                   <input name="name" value={formData.name} onChange={handleInputChange} type="text" className="w-full p-4 bg-gray-50 rounded-2xl outline-none" />
