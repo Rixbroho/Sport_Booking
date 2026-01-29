@@ -61,6 +61,31 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
     setIsModalOpen(true);
   };
 
+  const handleDateChange = (e) => {
+    const today = new Date();
+    const selectedDate = new Date(e.target.value);
+
+    // Ensure the selected date is strictly in the future
+    if (selectedDate <= today.setHours(0, 0, 0, 0)) {
+      toast.error("You cannot select a past or today's date.");
+      return;
+    }
+
+    setBookingData({ ...bookingData, date: e.target.value });
+  };
+
+  const handleTimeChange = (e) => {
+    const now = new Date();
+    const selectedDateTime = new Date(`${bookingData.date}T${e.target.value}`);
+
+    if (selectedDateTime < now) {
+      toast.error("You cannot select a past time.");
+      return;
+    }
+
+    setBookingData({ ...bookingData, time: e.target.value });
+  };
+
   const handleConfirmBooking = async () => {
     if (!bookingData.date || !bookingData.time || !bookingData.players) {
       toast.warning("Please fill in all fields");
@@ -284,9 +309,8 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
                   <input
                     type="date"
                     value={bookingData.date}
-                    onChange={(e) =>
-                      setBookingData({ ...bookingData, date: e.target.value })
-                    }
+                    onChange={handleDateChange}
+                    min={new Date().toISOString().split("T")[0]} // Disable past dates
                     className="w-full p-3 bg-transparent outline-none"
                   />
                 </div>
@@ -302,9 +326,8 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
                   <input
                     type="time"
                     value={bookingData.time}
-                    onChange={(e) =>
-                      setBookingData({ ...bookingData, time: e.target.value })
-                    }
+                    onChange={handleTimeChange}
+                    disabled={!bookingData.date} // Disable time picker until a date is selected
                     className="w-full p-3 bg-transparent outline-none"
                   />
                 </div>
