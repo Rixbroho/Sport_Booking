@@ -51,7 +51,8 @@ const UserBookingSetting = () => {
 
   const getFilteredBookings = () => {
     if (filterStatus === "all") return bookings;
-    return bookings.filter((b) => b.status === filterStatus);
+    const capitalizedStatus = filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1);
+    return bookings.filter((b) => b.status === capitalizedStatus);
   };
 
   const filteredBookings = getFilteredBookings();
