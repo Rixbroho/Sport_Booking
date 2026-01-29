@@ -41,11 +41,17 @@ export const forgotPassword = (email) =>
     email,
   });
 
-export const resetPassword = (email, newPassword, resetToken) =>
+export const verifyOtp = (email, otp) =>
+  API.post('/user/verifyotp', {
+    email,
+    otp,
+  });
+
+export const resetPassword = (email, otp, newPassword) =>
   API.post('/user/resetpassword', {
     email,
-    newPassword,
-    resetToken,
+    otp,
+    password: newPassword,
   });
 
 export const getMe = () => API.get('/user/me');

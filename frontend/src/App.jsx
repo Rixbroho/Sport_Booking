@@ -14,6 +14,9 @@ import Home from "./pages/users/Home";
 import LogIn from "./pages/LogIn";
 import SignIn from "./pages/SignIn";
 import ForgetPassword from "./pages/ForgetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOtp from "./pages/VerifyOtp";
+import ResetPassword from "./pages/ResetPassword";
 import UserPages from "./pages/users";
 import ProtectedRoute from "./protected/ProtectedRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -95,6 +98,9 @@ function AppContent() {
         }
       />
       <Route path="/forget-password" element={<ForgetPassword />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/verify-otp" element={<VerifyOtp />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       
       <Route
         path="/dashboard"
