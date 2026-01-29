@@ -39,6 +39,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
+        localStorage.setItem("userId", response.data.user.id);
         toast.success("Login successful!");
         onLogin(response.data.user);
 
@@ -56,7 +57,7 @@ const LogIn = ({ onSwitchToSignup, onLogin }) => {
     } finally {
       setLoading(false);
     }
-  };
+  };//login frontend
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 flex items-center justify-center p-4 relative overflow-hidden">
