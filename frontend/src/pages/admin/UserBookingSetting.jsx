@@ -6,7 +6,7 @@ const UserBookingSetting = () => {
   const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
-    // Fetch bookings data (replace with actual API call)
+    // Fetch bookings data (replace with 
     setBookings([
       { id: 1, user: "John Doe", venue: "Venue A", date: "2023-10-01", status: "Confirmed" },
       { id: 2, user: "Jane Smith", venue: "Venue B", date: "2023-10-02", status: "Pending" },
