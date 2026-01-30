@@ -12,3 +12,4 @@ npm i nodemon
 npm install sequelize pg pg-hstore
 npm i bcrypt
 npm i jsonwebtoken
+react
