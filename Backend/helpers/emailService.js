@@ -44,4 +44,67 @@ const sendResetEmail = async (toEmail, otp, name = '') => {
   return transporter.sendMail(mailOptions);
 };
 
-module.exports = { transporter, sendResetEmail };
+const sendBookingConfirmedEmail = async (toEmail, booking, adminName = '') => {
+  const html = `
+  <div style="font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.5;">
+    <h2 style="color:#0b6efd;">Booking Confirmed Successfully</h2>
+    <p>Hi ${adminName || 'Admin'},</p>
+    <p>The following booking has been <strong>confirmed</strong>:</p>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr><td style="padding:6px;border:1px solid #eee;font-weight:600;">Booking ID</td><td style="padding:6px;border:1px solid #eee;">${booking.id}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #eee;font-weight:600;">Venue Name</td><td style="padding:6px;border:1px solid #eee;">${booking.venueName}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #eee;font-weight:600;">Customer Name</td><td style="padding:6px;border:1px solid #eee;">${booking.userName}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #eee;font-weight:600;">Booking Date</td><td style="padding:6px;border:1px solid #eee;">${booking.date}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #eee;font-weight:600;">Time Slot</td><td style="padding:6px;border:1px solid #eee;">${booking.time}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #eee;font-weight:600;">Total Amount</td><td style="padding:6px;border:1px solid #eee;">${booking.price || 'N/A'}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #eee;font-weight:600;">Payment Status</td><td style="padding:6px;border:1px solid #eee;">${booking.paymentStatus || 'Unknown'}</td></tr>
+    </table>
+    <p>If you need to review the booking details, please sign in to the admin dashboard.</p>
+    <hr />
+    <p style="font-size:12px;color:#666;">This is an automated message from Sport Booking.</p>
+  </div>
+  `;
+
+  const text = `Booking Confirmed Successfully\n\nHi ${adminName || 'Admin'},\n\nThe following booking has been confirmed:\nBooking ID: ${booking.id}\nVenue Name: ${booking.venueName}\nCustomer Name: ${booking.userName}\nBooking Date: ${booking.date}\nTime Slot: ${booking.time}\nTotal Amount: ${booking.price || 'N/A'}\nPayment Status: ${booking.paymentStatus || 'Unknown'}\n\nPlease sign in to the admin dashboard to review the booking.\n\n--\nSport Booking`;
+
+  const mailOptions = {
+    from: `Sport Booking <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: 'Booking Confirmed Successfully – Venue Reservation',
+    html,
+    text,
+    replyTo: process.env.REPLY_TO || process.env.EMAIL_USER,
+  };
+
+  // Include BCC to site admin if configured
+  if (process.env.SITE_ADMIN_EMAIL) mailOptions.bcc = process.env.SITE_ADMIN_EMAIL;
+
+  // Retry logic
+  const maxAttempts = parseInt(process.env.EMAIL_MAX_ATTEMPTS || '3', 10);
+  const baseDelayMs = parseInt(process.env.EMAIL_BASE_DELAY_MS || '500', 10);
+
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`Email sent on attempt ${attempt} to ${toEmail}`, info);
+      return { success: true, info, attempts: attempt };
+    } catch (err) {
+      lastError = err;
+      console.warn(`Email attempt ${attempt} failed for ${toEmail}:`, err && err.message ? err.message : err);
+      if (attempt < maxAttempts) {
+        const delay = baseDelayMs * Math.pow(2, attempt - 1);
+        console.log(`Retrying in ${delay}ms...`);
+        await sleep(delay);
+      }
+    }
+  }
+
+  // All attempts failed
+  console.error(`All ${maxAttempts} email attempts failed for ${toEmail}`);
+  return { success: false, error: (lastError && (lastError.message || String(lastError))) || 'Unknown error', attempts: maxAttempts };
+};
+
+module.exports = { transporter, sendResetEmail, sendBookingConfirmedEmail };

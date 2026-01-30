@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Nav from "../components/Nav";
-import { getAllVenues, createBooking } from "../../services/api";
+import { getAllVenues, createBooking, getVenueBookings } from "../../services/api";
 
 const Venues = ({ user, onLogout, setCurrentPage }) => {
   const [activeNavTab, setActiveNavTab] = useState("Venues");
@@ -29,6 +29,7 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
     players: ""
   });
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [unavailableSlots, setUnavailableSlots] = useState([]);
 
   const handleNavTabChange = (tab) => {
     setActiveNavTab(tab);
@@ -58,10 +59,11 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
   const handleOpenBookingModal = (venue) => {
     setSelectedVenue(venue);
     setBookingData({ date: "", time: "", players: "" });
+    setUnavailableSlots([]);
     setIsModalOpen(true);
   };
 
-  const handleDateChange = (e) => {
+  const handleDateChange = async (e) => {
     const today = new Date();
     const selectedDate = new Date(e.target.value);
 
@@ -71,7 +73,23 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
       return;
     }
 
-    setBookingData({ ...bookingData, date: e.target.value });
+    const dateValue = e.target.value;
+    setBookingData({ ...bookingData, date: dateValue });
+
+    // Fetch existing bookings for this venue & date and mark their time slots as unavailable
+    try {
+      if (selectedVenue?.id) {
+        const res = await getVenueBookings(selectedVenue.id, dateValue);
+        if (res.data.success) {
+          setUnavailableSlots(res.data.bookings.map((b) => b.time));
+        } else {
+          setUnavailableSlots([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching booked slots:", err);
+      setUnavailableSlots([]);
+    }
   };
 
   const predefinedTimeSlots = [
@@ -122,7 +140,11 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
       }
     } catch (error) {
       console.error("Booking error:", error);
-      toast.error(error.response?.data?.message || "Failed to create booking");
+      if (error.response?.status === 409) {
+        toast.warning(error.response?.data?.message || "Selected time slot already booked");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to create booking");
+      }
     } finally {
       setBookingLoading(false);
     }
@@ -351,11 +373,14 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
                     <option value="" disabled>
                       Select a time slot
                     </option>
-                    {predefinedTimeSlots.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}
-                      </option>
-                    ))}
+                    {predefinedTimeSlots.map((slot) => {
+                      const isBooked = unavailableSlots.includes(slot);
+                      return (
+                        <option key={slot} value={slot} disabled={isBooked}>
+                          {slot}{isBooked ? " (Booked)" : ""}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 {!bookingData.date && (
