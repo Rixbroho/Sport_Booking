@@ -223,38 +223,6 @@ const getMe = async (req, res) => {
 
 
 const forgotPassword = async (req, res) => {
-<<<<<<< HEAD
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
-    }
-
-    const user = await User.findOne({ where: { email } });
-    
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    // Generate a reset token
-    const resetToken = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Password reset link sent to your email",
-      resetToken // In production, send this via email
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Error sending reset link",
-      error: error.message
-    });
-=======
   try {
     const { email } = req.body;
 
@@ -303,7 +271,6 @@ const verifyOtp = async (req, res) => {
     return res.json({ success: true, message: 'OTP verified' });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
->>>>>>> development
   }
 };
 
@@ -311,32 +278,6 @@ const resetPassword = async (req, res) => {
   try {
     const { email, newPassword, resetToken } = req.body;
 
-<<<<<<< HEAD
-    if (!email || !newPassword || !resetToken) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
-    }
-
-    // Verify token
-    let decoded;
-    try {
-      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-    } catch (error) {
-      return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
-    }
-
-    // Find user
-    const user = await User.findOne({ where: { email } });
-    
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update password
-    await user.update({ password: hashedPassword });
-=======
     if (!email || !otp || !password) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
@@ -358,7 +299,6 @@ const resetPassword = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await user.update({ password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null });
->>>>>>> development
 
     return res.status(200).json({
       success: true,
@@ -398,10 +338,6 @@ const changePassword = async (req, res) => {
 
 module.exports={
     getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
-<<<<<<< HEAD
-    logInUser,getMe,forgotPassword,resetPassword
-=======
     logInUser,getMe,forgotPassword,resetPassword, verifyOtp, changePassword
->>>>>>> development
 }
 
