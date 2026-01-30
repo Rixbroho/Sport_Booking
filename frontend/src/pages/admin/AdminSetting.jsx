@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Save, 
   User, 
@@ -7,21 +7,47 @@ import {
   Globe2, 
   Key, 
   Database,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
+import API from "../../services/api";
 
 const AdminSetting = () => {
   const [formData, setFormData] = useState({
-    adminName: "Alex Rivera",
-    adminEmail: "admin@venue-portal.com",
-    siteName: "Enterprise Venue Manager",
-    currency: "NRS (₹)",
+    adminName: "",
+    adminEmail: "",
+    siteName: "Sport Booking",
+    currency: "INR (₹)",
     bookingAutoApprove: false,
     emailAlerts: true,
     twoFactor: true
   });
 
   const [isSaved, setIsSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [saveError, setSaveError] = useState(null);
+
+  // Fetch admin settings on component mount
+  useEffect(() => {
+    fetchAdminSettings();
+  }, []);
+
+  const fetchAdminSettings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await API.get("/user/admin/settings");
+      if (response.data.success) {
+        setFormData(response.data.settings);
+      }
+    } catch (err) {
+      setError("Failed to load admin settings");
+      console.error("Error fetching admin settings:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -30,31 +56,67 @@ const AdminSetting = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     if (isSaved) setIsSaved(false);
+    if (saveError) setSaveError(null);
   };
 
-  const handleSave = () => {
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  const handleSave = async () => {
+    try {
+      setSaveError(null);
+      const response = await API.put("/user/admin/settings", formData);
+      if (response.data.success) {
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 3000);
+      }
+    } catch (err) {
+      setSaveError("Failed to save settings. Please try again.");
+      console.error("Error saving admin settings:", err);
+    }
   };
 
   return (
     <div className="max-w-6xl mx-auto pb-10">
-      {/* Top Bar / Actions */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-sm font-medium text-emerald-600 font-mono uppercase tracking-wider">System Configuration</h2>
-          <p className="text-gray-500 text-sm">Manage your account and platform-wide preferences.</p>
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
         </div>
-        <button 
-          onClick={handleSave}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-all shadow-sm active:scale-95"
-        >
-          {isSaved ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4" />}
-          {isSaved ? "Settings Saved" : "Save Changes"}
-        </button>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600" />
+          <p className="text-red-700 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Save Error Alert */}
+      {saveError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600" />
+          <p className="text-red-700 text-sm">{saveError}</p>
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          {/* Top Bar / Actions */}
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-sm font-medium text-emerald-600 font-mono uppercase tracking-wider">System Configuration</h2>
+              <p className="text-gray-500 text-sm">Manage your account and platform-wide preferences.</p>
+            </div>
+            <button 
+              onClick={handleSave}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              disabled={loading}
+            >
+              {isSaved ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4" />}
+              {isSaved ? "Settings Saved" : "Save Changes"}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Column: Profile & Security */}
         <div className="lg:col-span-2 space-y-6">
@@ -192,7 +254,9 @@ const AdminSetting = () => {
           </div>
         </div>
 
-      </div>
+        </div>
+        </>
+      )}
     </div>
   );
 };

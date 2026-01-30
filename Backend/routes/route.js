@@ -15,6 +15,8 @@ const {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  getAdminSettings,
+  updateAdminSettings,
 } = require("../controllers/userController");
 
 const authGuard = require("../helpers/authguagrd");
@@ -34,5 +36,7 @@ router.get("/getactiveusers", authGuard, getActiveUsers);
 router.put("/updateuserbyid/:id", authGuard, isAdmin, updateUser);
 router.delete("/deleteuserbyid/:id", authGuard, isAdmin, deleteUser);
 router.post("/loginuser", logInUser);
+router.get("/admin/settings", authGuard, isAdmin, getAdminSettings);
+router.put("/admin/settings", authGuard, isAdmin, updateAdminSettings);
 
 module.exports = router;

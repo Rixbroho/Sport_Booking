@@ -5,20 +5,30 @@ const { sendBookingConfirmedEmail } = require("../helpers/emailService");
 exports.createBooking = async (req, res) => {
   try {
     // Log this to your terminal to see what's actually inside your token
-    console.log("Token Data:", req.user);
+    console.log("createBooking - Token Data:", req.user, "AuthHeader:", req.headers?.authorization);
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: missing user information' });
+    }
+
+    // Basic payload validation
+    const { venueId, venueName, date, time } = req.body;
+    if (!venueId || !venueName || !date || !time) {
+      return res.status(400).json({ success: false, message: 'Missing required booking fields' });
+    }
 
     const newBooking = await Booking.create({
       ...req.body,
       userId: req.user.id,
       // Fallback logic: if username is missing from token, use "User" or email
       userName: req.user.username || req.user.email || "Guest User",
-      status: "Pending"
+      status: "Pending",
     });
 
     res.status(201).json({ success: true, booking: newBooking });
   } catch (error) {
-    console.error("Booking Create Error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Booking Create Error:", error && error.stack ? error.stack : error);
+    res.status(500).json({ success: false, message: 'Server error creating booking', error: error.message });
   }
 };
 
@@ -33,13 +43,22 @@ exports.getAllBookings = async (req, res) => {
 
 exports.getUserBookings = async (req, res) => {
   try {
-    const bookings = await Booking.findAll({ 
+    console.log("getUserBookings - Token Data:", req.user, "AuthHeader:", req.headers?.authorization);
+
+    if (!req.user || !req.user.id) {
+      console.warn('getUserBookings - missing req.user or req.user.id');
+      return res.status(401).json({ success: false, message: 'Unauthorized: missing user information' });
+    }
+
+    const bookings = await Booking.findAll({
       where: { userId: req.user.id },
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
     });
+
     res.json({ success: true, bookings });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getUserBookings Error:', error && error.stack ? error.stack : error, 'req.user:', req.user);
+    res.status(500).json({ success: false, message: 'Server error fetching bookings', error: error.message });
   }
 };
 

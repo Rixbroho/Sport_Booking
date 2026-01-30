@@ -11,6 +11,7 @@ import {
   Activity,
 } from "lucide-react";
 import Nav from "../components/Nav";
+import { toast } from "react-toastify";
 import { getDashboardStats, getUserBookings } from "../../services/api";
 
 const UserDashboard = ({
@@ -41,23 +42,43 @@ const UserDashboard = ({
         setLoadingStats(true);
         const response = await getDashboardStats();
         if (response.data.success) {
-          const backendStats = response.data.stats.map((stat) => ({
-            label: stat.label,
-            value: stat.value,
-            icon: stat.icon === "Calendar" ? Calendar : stat.icon === "MapPin" ? MapPin : stat.icon === "Clock" ? Clock : Trophy,
-            color: stat.color,
-            bg: stat.bg,
-          }));
+          const rawStats = response.data.stats;
+          // Backend may return either an array (legacy) or an object (current)
+          let backendStats = [];
+          if (Array.isArray(rawStats)) {
+            backendStats = rawStats.map((stat) => ({
+              label: stat.label,
+              value: stat.value,
+              icon: stat.icon === "Calendar" ? Calendar : stat.icon === "MapPin" ? MapPin : stat.icon === "Clock" ? Clock : Trophy,
+              color: stat.color,
+              bg: stat.bg,
+            }));
+          } else if (rawStats && typeof rawStats === 'object') {
+            backendStats = [
+              { label: 'Total Bookings', value: rawStats.totalBookings || 0, icon: Trophy, color: 'text-emerald-500', bg: 'bg-emerald-100' },
+              { label: "Today's Bookings", value: rawStats.bookingsToday || 0, icon: Calendar, color: 'text-sky-500', bg: 'bg-sky-100' },
+              { label: 'Pending', value: rawStats.pendingBookings || 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-100' },
+              { label: 'Revenue', value: rawStats.totalRevenue || 0, icon: MapPin, color: 'text-rose-500', bg: 'bg-rose-100' },
+            ];
+          }
           setStats(backendStats);
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        // Only admins can access this endpoint; suppress stack noise for non-admins
+        console.debug("Error fetching stats:", error?.response?.status, error?.response?.data?.message || error.message);
       } finally {
         setLoadingStats(false);
       }
     };
-    fetchStats();
-  }, []);
+
+    // Only request admin-level dashboard stats when the current user is an admin
+    if (user?.role === 'admin') {
+      fetchStats();
+    } else {
+      setLoadingStats(false);
+      setStats([]);
+    }
+  }, [user?.role]);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -69,6 +90,7 @@ const UserDashboard = ({
         }
       } catch (error) {
         console.error("Error fetching bookings:", error);
+        toast.error(error.response?.data?.message || 'Failed to load bookings');
       } finally {
         setLoadingBookings(false);
       }

@@ -150,14 +150,15 @@ const logInUser=async(req,res)=>{
             return res.status(400).json({success:false,message:"Invalid credentials"});
         }
 
-        const token=jwt.sign(
+        const token = jwt.sign(
             {
-                // id:user.id,
-                role:user.role,
-                username:user.username,
-                email:user.email
-            },process.env.JWT_SECRET,
-            {expiresIn:"7d"}
+                id: user.id,
+                role: user.role,
+                username: user.username,
+                email: user.email,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
         );
 
         return res.status(200).json({
@@ -294,8 +295,89 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Admin Settings Controller
+const getAdminSettings = async (req, res) => {
+  try {
+    // Get the admin user (assuming logged-in user is admin)
+    const user = await User.findOne({
+      where: { id: req.user.id },
+      attributes: { exclude: ['password'] }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Return admin settings
+    const settings = {
+      adminName: user.username || 'Admin',
+      adminEmail: user.email,
+      siteName: process.env.SITE_NAME || 'Sport Booking',
+      currency: process.env.CURRENCY || 'INR (₹)',
+      bookingAutoApprove: process.env.AUTO_APPROVE_BOOKINGS === 'true' || false,
+      emailAlerts: process.env.EMAIL_ALERTS === 'true' || true,
+      twoFactor: user.twoFactorEnabled || true
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: 'Admin settings fetched successfully',
+      settings
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching admin settings',
+      error: error.message
+    });
+  }
+};
+
+const updateAdminSettings = async (req, res) => {
+  try {
+    const { adminName, adminEmail, siteName, currency, bookingAutoApprove, emailAlerts, twoFactor } = req.body;
+
+    // Get the admin user
+    const user = await User.findOne({
+      where: { id: req.user.id }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Update user fields
+    if (adminName) user.username = adminName;
+    if (adminEmail) user.email = adminEmail;
+    if (twoFactor !== undefined) user.twoFactorEnabled = twoFactor;
+
+    await user.save();
+
+    // Settings would normally be stored in a settings table or env, but for now we'll just return success
+    return res.status(200).json({
+      success: true,
+      message: 'Admin settings updated successfully',
+      settings: {
+        adminName: user.username,
+        adminEmail: user.email,
+        siteName,
+        currency,
+        bookingAutoApprove,
+        emailAlerts,
+        twoFactor: user.twoFactorEnabled
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error updating admin settings',
+      error: error.message
+    });
+  }
+};
+
 module.exports={
     getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
-    logInUser,getMe,forgotPassword,verifyOtp,resetPassword
+    logInUser,getMe,forgotPassword,verifyOtp,resetPassword,getAdminSettings,updateAdminSettings
 }
 

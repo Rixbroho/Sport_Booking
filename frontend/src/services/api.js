@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const API = axios.create({
   baseURL: 'http://localhost:3000/api',
@@ -17,6 +18,26 @@ API.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Global response interceptor to handle auth errors centrally
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      // Clear local auth state and prompt re-login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userId');
+      toast.error('Session expired or unauthorized. Redirecting to login...');
+      // Small delay so toast can show, then redirect
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 800);
+    }
     return Promise.reject(error);
   }
 );
