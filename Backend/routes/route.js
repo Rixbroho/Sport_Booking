@@ -13,15 +13,20 @@ const {
   logInUser,
   getMe,
   forgotPassword,
+  verifyOtp,
   resetPassword,
 } = require("../controllers/userController");
 
 const authGuard = require("../helpers/authguagrd");
 const isAdmin = require("../helpers/isAdmin");
 
+console.log('addUser type:', typeof addUser);
+console.log('upload.none type:', typeof upload.none);
+
 router.post("/user", upload.none(), addUser);
 router.get("/me", authGuard, getMe);
 router.post("/forgotpassword", forgotPassword);
+router.post("/verifyotp", verifyOtp);
 router.post("/resetpassword", resetPassword);
 router.get("/getalluser", authGuard, isAdmin, getAllUser);
 router.get("/getusersbyid/:id", authGuard, isAdmin, getUsersById);
