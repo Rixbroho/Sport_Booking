@@ -27,6 +27,15 @@ const AdminSetting = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saveError, setSaveError] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Fetch admin settings on component mount
   useEffect(() => {
@@ -70,6 +79,56 @@ const AdminSetting = () => {
     } catch (err) {
       setSaveError("Failed to save settings. Please try again.");
       console.error("Error saving admin settings:", err);
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (passwordError) setPasswordError(null);
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      setPasswordError(null);
+      
+      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+        setPasswordError("All fields are required");
+        return;
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setPasswordError("New passwords do not match");
+        return;
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        setPasswordError("New password must be at least 6 characters");
+        return;
+      }
+
+      setPasswordLoading(true);
+      const response = await API.post("/user/changepassword", {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      if (response.data.success) {
+        setPasswordSuccess(true);
+        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordSuccess(false);
+        }, 2000);
+      }
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Failed to change password");
+      console.error("Error changing password:", err);
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -226,7 +285,9 @@ const AdminSetting = () => {
                 <span className="text-sm text-gray-600">2FA Security</span>
                 <span className="px-2 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded uppercase">Active</span>
               </div>
-              <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all">
+              <button 
+                onClick={() => setShowPasswordModal(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all">
                 <Key className="w-4 h-4" />
                 Reset Password
               </button>
@@ -253,8 +314,89 @@ const AdminSetting = () => {
             </label>
           </div>
         </div>
-
         </div>
+
+        {/* Password Reset Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl">
+              <h3 className="text-lg font-bold text-gray-800 mb-6">Reset Password</h3>
+              
+              {passwordError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600" />
+                  <p className="text-red-700 text-sm">{passwordError}</p>
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <p className="text-emerald-700 text-sm">Password changed successfully!</p>
+                </div>
+              )}
+
+              <div className="space-y-4 mb-6">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Current Password</label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Enter your current password"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase">New Password</label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Enter new password"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Confirm Password</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Confirm new password"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                    setPasswordError(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all"
+                  disabled={passwordLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleResetPassword}
+                  className="flex-1 px-4 py-2.5 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-all disabled:opacity-50"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? "Changing..." : "Change Password"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         </>
       )}
     </div>

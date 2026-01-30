@@ -295,6 +295,49 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Change Password (for authenticated users)
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current password and new password are required' });
+    }
+
+    // Get the user
+    const user = await User.findOne({
+      where: { id: req.user.id }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await user.update({ password: hashedPassword });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error changing password',
+      error: error.message
+    });
+  }
+};
+
 // Admin Settings Controller
 const getAdminSettings = async (req, res) => {
   try {
@@ -378,6 +421,6 @@ const updateAdminSettings = async (req, res) => {
 
 module.exports={
     getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
-    logInUser,getMe,forgotPassword,verifyOtp,resetPassword,getAdminSettings,updateAdminSettings
+    logInUser,getMe,forgotPassword,verifyOtp,resetPassword,changePassword,getAdminSettings,updateAdminSettings
 }
 

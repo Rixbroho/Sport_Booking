@@ -15,6 +15,7 @@ const {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  changePassword,
   getAdminSettings,
   updateAdminSettings,
 } = require("../controllers/userController");
@@ -30,6 +31,7 @@ router.get("/me", authGuard, getMe);
 router.post("/forgotpassword", forgotPassword);
 router.post("/verifyotp", verifyOtp);
 router.post("/resetpassword", resetPassword);
+router.post("/changepassword", authGuard, changePassword);
 router.get("/getalluser", authGuard, isAdmin, getAllUser);
 router.get("/getusersbyid/:id", authGuard, isAdmin, getUsersById);
 router.get("/getactiveusers", authGuard, getActiveUsers);
