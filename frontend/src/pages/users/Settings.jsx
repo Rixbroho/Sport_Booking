@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Nav from "../components/Nav";
 import { toast } from 'react-toastify';
+import { changePassword } from '../../services/api';
 
 const Settings = ({ user, onLogout, setCurrentPage }) => {
   const [activeNavTab, setActiveNavTab] = useState("Settings");
@@ -20,6 +21,7 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [notifications, setNotifications] = useState({
     bookingReminders: true,
     promotions: false,
@@ -39,23 +41,32 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
     });
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
-    if (passwordData.newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (passwordData.newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
-    // API call would go here
-    toast.success("Password changed successfully!");
-    setShowPasswordModal(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    setPasswordLoading(true);
+    try {
+      const res = await changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      if (res && res.status === 200) {
+        toast.success("Password changed successfully.");
+        setShowPasswordModal(false);
+        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Failed to change password");
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   return (
@@ -302,6 +313,7 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                         currentPassword: e.target.value,
                       })
                     }
+                    disabled={passwordLoading}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     placeholder="Enter current password"
                   />
@@ -319,6 +331,7 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                         newPassword: e.target.value,
                       })
                     }
+                    disabled={passwordLoading}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     placeholder="Enter new password"
                   />
@@ -336,6 +349,7 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                         confirmPassword: e.target.value,
                       })
                     }
+                    disabled={passwordLoading}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     placeholder="Confirm new password"
                   />
@@ -352,8 +366,9 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                 <button
                   onClick={handlePasswordChange}
                   className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold"
+                  disabled={passwordLoading}
                 >
-                  Change Password
+                  {passwordLoading ? "Changing..." : "Change Password"}
                 </button>
               </div>
             </div>

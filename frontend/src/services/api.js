@@ -106,8 +106,13 @@ export const getVenueBookings = (venueId, date) =>
 export const getAllBookings = () =>
   API.get("/booking");
 
-export const changePassword = (currentPassword, newPassword) =>
-  API.post('/user/changepassword', { currentPassword, newPassword });
+export const changePassword = (currentPasswordOrObj, newPassword) => {
+  if (typeof currentPasswordOrObj === 'object') {
+    const { currentPassword, newPassword: np } = currentPasswordOrObj;
+    return API.post('/user/changepassword', { currentPassword, newPassword: np });
+  }
+  return API.post('/user/changepassword', { currentPassword: currentPasswordOrObj, newPassword });
+};
 
 export const updateBookingStatus = (id, status) =>
   API.put(`/booking/${id}/status`, { status });
