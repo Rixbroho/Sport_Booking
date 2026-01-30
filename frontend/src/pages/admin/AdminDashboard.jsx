@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { getDashboardStats, getAllUsers, getAllBookings } from "../../services/api";
+import { getInitials } from "../../helpers/getInitials";
 import UserBookingSetting from "./UserBookingSetting";
 import VenueManagement from "./VenueManagement";
 import AdminSetting from "./AdminSetting";
@@ -25,6 +26,8 @@ const AdminDashboard = ({ onLogout }) => {
     { label: "Pending Issues", value: "0", icon: Activity, color: "text-rose-600", bg: "bg-rose-50", trend: "Stable" },
   ]);
   const [loading, setLoading] = useState(true);
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [usersMap, setUsersMap] = useState({});
 
   useEffect(() => {
     document.title = `Admin - ${activeTab}`;
@@ -34,9 +37,10 @@ const AdminDashboard = ({ onLogout }) => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const [statsRes, usersRes] = await Promise.all([
+        const [statsRes, usersRes, bookingsRes] = await Promise.all([
           getDashboardStats(),
-          getAllUsers()
+          getAllUsers(),
+          getAllBookings()
         ]);
 
         if (statsRes?.data?.success && usersRes?.data?.success) {
@@ -49,6 +53,21 @@ const AdminDashboard = ({ onLogout }) => {
             { label: "Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: BarChart2, color: "text-amber-600", bg: "bg-amber-50", trend: "+18%" },
             { label: "Pending Issues", value: pendingBookings.toString(), icon: Activity, color: "text-rose-600", bg: "bg-rose-50", trend: "Stable" },
           ]);
+
+          // Create users map for quick lookup
+          const userMap = {};
+          usersRes.data.users?.forEach(user => {
+            userMap[user.id] = user;
+          });
+          setUsersMap(userMap);
+
+          // Filter confirmed bookings and get recent ones
+          if (bookingsRes?.data?.success && bookingsRes.data.bookings) {
+            const confirmedBookings = bookingsRes.data.bookings
+              .filter(b => b.status === 'Confirmed')
+              .slice(0, 5); // Get last 5
+            setRecentBookings(confirmedBookings);
+          }
         }
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -91,31 +110,48 @@ const AdminDashboard = ({ onLogout }) => {
             {/* Bottom Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Transactions</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Confirmed Bookings</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="text-gray-400 text-xs uppercase border-b border-gray-50">
                         <th className="pb-3 font-semibold">User</th>
-                        <th className="pb-3 font-semibold">Status</th>
+                        <th className="pb-3 font-semibold">Venue</th>
+                        <th className="pb-3 font-semibold">Date</th>
                         <th className="pb-3 font-semibold text-right">Amount</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {[1, 2, 3].map((item) => (
-                        <tr key={item} className="group">
-                          <td className="py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">JD</div>
-                              <span className="text-sm font-medium text-gray-700">John Doe</span>
-                            </div>
+                      {recentBookings.length > 0 ? (
+                        recentBookings.map((booking) => {
+                          const user = usersMap[booking.userId];
+                          const displayName = user?.username || booking.userName || 'User';
+                          const initials = getInitials(displayName);
+                          const price = booking.price ? parseInt(booking.price?.replace(/[^\d]/g, '') || 0) : 0;
+                          
+                          return (
+                            <tr key={booking.id} className="group hover:bg-gray-50">
+                              <td className="py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
+                                    {initials}
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-700">{displayName}</span>
+                                </div>
+                              </td>
+                              <td className="py-4 text-sm text-gray-600">{booking.venueName || 'N/A'}</td>
+                              <td className="py-4 text-sm text-gray-600">{booking.date || 'N/A'}</td>
+                              <td className="py-4 text-right text-sm font-bold text-gray-900">₹{price.toLocaleString()}</td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="py-6 text-center text-gray-500">
+                            No confirmed bookings yet
                           </td>
-                          <td className="py-4">
-                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full uppercase">Success</span>
-                          </td>
-                          <td className="py-4 text-right text-sm font-bold text-gray-900">₹1,200</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
