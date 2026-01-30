@@ -2,15 +2,13 @@ import React, { useState, useEffect } from "react";
 import { 
   Save, 
   User, 
-  ShieldCheck, 
   BellRing, 
   Globe2, 
-  Key, 
   Database,
   CheckCircle2
 } from "lucide-react";
 import { toast } from 'react-toastify';
-import { getSettings, updateSettings, updateUserProfile, forgotPassword } from '../../services/api';
+import { getSettings, updateSettings, updateUserProfile, getMe } from '../../services/api';
 
 const AdminSetting = () => {
   const [formData, setFormData] = useState({
@@ -21,41 +19,48 @@ const AdminSetting = () => {
     currency: "INR (₹)",
     bookingAutoApprove: false,
     emailAlerts: false,
-    twoFactor: false
   });
 
   const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    const load = async () => {
+    const loadAdminData = async () => {
       try {
         setLoading(true);
-        const res = await getSettings();
-        if (res.data.success) {
-          const s = res.data.settings;
-          setFormData({
-            adminName: s.adminName || "",
-            adminEmail: s.adminEmail || "",
+        // Fetch current logged-in admin profile
+        const meRes = await getMe();
+        if (meRes.data.success && meRes.data.user) {
+          const adminUser = meRes.data.user;
+          setFormData(prev => ({
+            ...prev,
+            adminName: adminUser.username || "",
+            adminEmail: adminUser.email || "",
+          }));
+        }
+
+        // Fetch platform settings
+        const settingsRes = await getSettings();
+        if (settingsRes.data.success) {
+          const s = settingsRes.data.settings;
+          setFormData(prev => ({
+            ...prev,
             adminAddress: s.adminAddress || "",
             siteName: s.siteName || "",
             currency: s.currency || "INR (₹)",
             bookingAutoApprove: s.bookingAutoApprove === 'true',
             emailAlerts: s.emailAlerts === 'true',
-            twoFactor: s.twoFactor === 'true'
-          });
+          }));
         }
       } catch (err) {
-        console.error('Could not load settings', err);
+        console.error('Could not load admin data', err);
         toast.error('Failed to load admin settings');
       } finally {
         setLoading(false);
       }
     };
 
-    load();
+    loadAdminData();
   }, []);
 
   const handleChange = (e) => {
@@ -71,45 +76,22 @@ const AdminSetting = () => {
     try {
       setLoading(true);
       const payload = {
-        adminName: formData.adminName,
-        adminEmail: formData.adminEmail,
-        adminAddress: formData.adminAddress,
         siteName: formData.siteName,
         currency: formData.currency,
         bookingAutoApprove: formData.bookingAutoApprove,
         emailAlerts: formData.emailAlerts,
-        twoFactor: formData.twoFactor
       };
 
       await updateSettings(payload);
 
-      // Also update admin user profile (username/email and optional password)
+      // Also update admin user profile (username/email)
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (user && user.id) {
-        // Validate password fields if provided
-        if (newPassword || confirmPassword) {
-          if (newPassword.length < 8) {
-            toast.error('Password must be at least 8 characters long');
-            setLoading(false);
-            return;
-          }
-          if (newPassword !== confirmPassword) {
-            toast.error('Passwords do not match');
-            setLoading(false);
-            return;
-          }
-        }
-
         const userPayload = { username: formData.adminName, email: formData.adminEmail };
-        if (newPassword) userPayload.password = newPassword;
-
         await updateUserProfile(user.id, userPayload);
         // refresh local storage user
         const updatedUser = { ...user, username: formData.adminName, email: formData.adminEmail };
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        // clear password fields after successful update
-        setNewPassword('');
-        setConfirmPassword('');
       }
 
       setIsSaved(true);
@@ -120,21 +102,6 @@ const AdminSetting = () => {
       toast.error('Failed to save settings');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    try {
-      const email = formData.adminEmail;
-      if (!email) {
-        toast.error('Admin email is required to reset password');
-        return;
-      }
-      await forgotPassword(email);
-      toast.success('Password reset requested. Check the admin email for the OTP.');
-    } catch (err) {
-      console.error('Error requesting password reset', err);
-      toast.error('Failed to request password reset');
     }
   };
 
@@ -263,49 +230,8 @@ const AdminSetting = () => {
           </div>
         </div>
 
-        {/* Right Column: Security & Status */}
+        {/* Right Column: Status */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <ShieldCheck className="w-5 h-5 text-purple-600" />
-              <h3 className="font-bold text-gray-800">Security</h3>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">2FA Security</span>
-                <span className="px-2 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded uppercase">Active</span>
-              </div>
-
-              {/* Change Password Fields */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password (min 8 chars)"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase">Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
-                />
-              </div>
-
-              <button onClick={handleResetPassword} disabled={loading} className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                <Key className="w-4 h-4" />
-                Reset Password
-              </button>
-            </div>
-          </div>
-
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 text-white shadow-xl">
             <div className="flex items-center gap-2 mb-4">
               <BellRing className="w-5 h-5 text-emerald-400" />

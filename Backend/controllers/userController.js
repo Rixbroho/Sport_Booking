@@ -2,6 +2,7 @@ const User=require("../models/userModel.js");
 const jwt=require("jsonwebtoken");
 const bcrypt=require("bcrypt");
 const crypto = require('crypto');
+const { sendResetEmail } = require('../helpers/emailService');
 
 const addUser=async(req,res)=>{
     try{
@@ -242,8 +243,15 @@ const forgotPassword = async (req, res) => {
 
     await user.update({ resetPasswordToken: hashedOtp, resetPasswordExpires: new Date(expires) });
 
-    // NOTE: In production you would send the OTP via email. For development, return the OTP in the response.
-    return res.status(200).json({ success: true, message: 'OTP sent to email (in production this would be emailed)', otp });
+    // Send OTP via email
+    try {
+      await sendResetEmail(user.email, otp, user.username);
+    } catch (err) {
+      console.error('Failed to send reset OTP email:', err && err.message ? err.message : err);
+      return res.status(500).json({ success: false, message: 'Failed to send OTP email', error: err && err.message ? err.message : String(err) });
+    }
+
+    return res.status(200).json({ success: true, message: 'OTP sent to email' });
   } catch (error) {
     return res.status(500).json({ message: "Error sending reset OTP", error: error.message });
   }
