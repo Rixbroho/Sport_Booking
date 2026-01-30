@@ -97,6 +97,9 @@ export const createBooking = (bookingData) =>
 export const getUserBookings = () =>
   API.get("/booking/user");
 
+export const getVenueBookings = (venueId, date) =>
+  API.get("/booking/venue", { params: { venueId, date } });
+
 export const getAllBookings = () =>
   API.get("/booking");
 
