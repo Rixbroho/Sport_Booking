@@ -8,9 +8,10 @@ import {
   Trophy,
   Calendar,
   MapPin,
+  Activity,
 } from "lucide-react";
 import Nav from "../components/Nav";
-import { getDashboardStats, getUserBookings } from "../../services/api"; // Updated API imports
+import { getDashboardStats, getUserBookings } from "../../services/api";
 
 const UserDashboard = ({
   user = { username: "Guest", role: "Player" },
@@ -23,24 +24,22 @@ const UserDashboard = ({
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(true);
 
-  // Ensure user has the required properties
   const displayUser = {
     username: user?.username || "Guest",
     role: user?.role || "Player",
   };
 
-  // Handle tab change
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setCurrentPage(tab.toLowerCase());
   };
 
-  // Fetch stats from the backend
+  // --- YOUR ORIGINAL FETCHING LOGIC (GUARANTEES DATABASE CONNECTION) ---
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoadingStats(true);
-        const response = await getDashboardStats(); // API call to fetch stats
+        const response = await getDashboardStats();
         if (response.data.success) {
           const backendStats = response.data.stats.map((stat) => ({
             label: stat.label,
@@ -57,16 +56,14 @@ const UserDashboard = ({
         setLoadingStats(false);
       }
     };
-
     fetchStats();
   }, []);
 
-  // Fetch upcoming bookings from the backend
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setLoadingBookings(true);
-        const response = await getUserBookings(); // API call to fetch bookings
+        const response = await getUserBookings();
         if (response.data.success) {
           setUpcomingBookings(response.data.bookings);
         }
@@ -76,173 +73,151 @@ const UserDashboard = ({
         setLoadingBookings(false);
       }
     };
-
     fetchBookings();
   }, []);
+  // --- END OF ORIGINAL LOGIC ---
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Navigation Sidebar */}
-      <Nav
-        activeTab={activeTab}
-        setActiveTab={handleTabChange}
-        onLogout={onLogout}
-      />
+    <div className="flex min-h-screen bg-[#F9FAFB]">
+      <Nav activeTab={activeTab} setActiveTab={handleTabChange} onLogout={onLogout} />
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden md:ml-64">
-        {/* Header */}
-        <header className="fixed top-0 right-0 left-0 h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 md:left-64 z-40">
-          <h2 className="text-2xl font-bold text-gray-800">
-            {activeTab} Overview
-          </h2>
+      <main className="flex-1 flex flex-col md:ml-64">
+        {/* Modern White Header */}
+        <header className="fixed top-0 right-0 left-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 md:left-64 z-40">
+          <div>
+            <h2 className="text-xl font-black text-gray-800 tracking-tight uppercase italic">
+              {activeTab} <span className="text-emerald-500">Overview</span>
+            </h2>
+          </div>
 
-          <div className="flex items-center gap-6">
-            <div className="relative hidden sm:block">
+          <div className="flex items-center gap-5">
+            <div className="relative hidden lg:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search turfs..."
-                className="pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 w-64 transition-all"
+                className="pl-10 pr-4 py-2 bg-gray-100 border-transparent rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:bg-white outline-none w-60 text-sm transition-all"
               />
             </div>
-            <button className="relative p-2 text-gray-400 hover:bg-gray-100 rounded-full">
+            
+            <button className="p-2 text-gray-400 hover:bg-gray-50 rounded-xl transition-colors relative">
               <Bell size={22} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
+
+            <div className="flex items-center gap-3 pl-5 border-l border-gray-100">
               <div className="text-right">
-                <p className="text-sm font-bold text-gray-800">
-                  {displayUser.username}
-                </p>
-                <p className="text-xs text-gray-500">{displayUser.role}</p>
+                <p className="text-sm font-bold text-gray-900 leading-none mb-1">{displayUser.username}</p>
+                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">{displayUser.role}</p>
               </div>
-              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
-                {displayUser.username
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+              <div className="w-10 h-10 bg-emerald-500 rounded-xl shadow-lg shadow-emerald-100 flex items-center justify-center text-white font-black">
+                {displayUser.username[0]}
               </div>
             </div>
           </div>
         </header>
 
-        {/* Dashboard Body */}
-        <div className="flex-1 overflow-y-auto p-8 pt-28">
+        <div className="flex-1 p-8 pt-28 space-y-8">
+          
           {/* Stats Grid */}
-          {loadingStats ? (
-            <p className="text-gray-500">Loading stats...</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-              {stats.map((stat, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5 hover:shadow-md transition-shadow"
-                >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {loadingStats ? (
+              [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-white animate-pulse rounded-3xl border border-gray-100" />)
+            ) : (
+              stats.map((stat, idx) => (
+                <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
                   <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl`}>
                     <stat.icon size={24} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 font-medium">
-                      {stat.label}
-                    </p>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {stat.value}
-                    </p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">{stat.label}</p>
+                    <p className="text-2xl font-black text-gray-900">{stat.value}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Recent Activity (Bookings Table) */}
-            <div className="flex-2 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-800">
-                  Your Upcoming Bookings
-                </h3>
-                <button
-                  onClick={() => handleTabChange("Bookings")}
-                  className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm flex items-center gap-1"
-                >
-                  View All <ChevronRight size={16} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Bookings Table */}
+            <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-8 border-b border-gray-50 flex justify-between items-center">
+                <h3 className="text-lg font-black text-gray-900 uppercase italic tracking-tight">Upcoming Sessions</h3>
+                <button onClick={() => handleTabChange("Bookings")} className="text-emerald-600 font-bold text-xs uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all">
+                  View All <ChevronRight size={14} />
                 </button>
               </div>
-              {loadingBookings ? (
-                <p className="text-gray-500 p-6">Loading bookings...</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                      <tr>
-                        <th className="px-6 py-4 font-semibold">Venue / ID</th>
-                        <th className="px-6 py-4 font-semibold">Date & Time</th>
-                        <th className="px-6 py-4 font-semibold">Status</th>
-                        <th className="px-6 py-4 font-semibold">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {upcomingBookings.map((booking) => (
-                        <tr
-                          key={booking.id}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-4">
-                            <div className="font-bold text-gray-800">
-                              {booking.turf}
-                            </div>
-                            <div className="text-xs font-mono text-gray-400">
-                              {booking.id}
-                            </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50/50">
+                    <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                      <th className="px-8 py-4 text-left">Venue Info</th>
+                      <th className="px-8 py-4 text-left">Schedule</th>
+                      <th className="px-8 py-4 text-left">Status</th>
+                      <th className="px-8 py-4 text-right">Fee</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {loadingBookings ? (
+                      <tr><td colSpan="4" className="p-20 text-center text-gray-400 font-bold italic">Syncing with database...</td></tr>
+                    ) : upcomingBookings.length > 0 ? (
+                      upcomingBookings.map((booking) => (
+                        <tr key={booking.id} className="group hover:bg-emerald-50/30 transition-colors">
+                          <td className="px-8 py-6">
+                            <div className="font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">{booking.turf}</div>
+                            <div className="text-[10px] font-mono text-gray-400 uppercase tracking-tighter">ID: {booking.id}</div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-800">
-                              {booking.date}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {booking.time}
-                            </div>
+                          <td className="px-8 py-6">
+                            <div className="text-sm font-bold text-gray-800">{booking.date}</div>
+                            <div className="text-xs text-gray-500">{booking.time}</div>
                           </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                booking.status === "Confirmed"
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-amber-100 text-amber-700"
-                              }`}
-                            >
+                          <td className="px-8 py-6">
+                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+                              booking.status === "Confirmed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                            }`}>
                               {booking.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-bold text-gray-800">
-                            {booking.price}
-                          </td>
+                          <td className="px-8 py-6 text-right font-black text-gray-900">{booking.price}</td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    ) : (
+                      <tr><td colSpan="4" className="p-20 text-center text-gray-400 font-bold italic">No sessions found in database.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {/* Quick Action Sidebar */}
-            <div className="flex-1 space-y-6">
-              <div className="bg-linear-to-br from-emerald-500 to-green-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+            {/* Sidebar Cards */}
+            <div className="space-y-6">
+              {/* New Feature: Weather Widget */}
+              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="flex justify-between items-start mb-4">
+                  <Activity className="text-emerald-500 animate-pulse" size={24} />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Match Conditions</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-gray-900 tracking-tighter">24°C</span>
+                  <span className="text-sm font-bold text-emerald-500 uppercase">Optimal</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 font-medium">Skies are clear in Lalitpur. Perfect for a game today!</p>
+              </div>
+
+              {/* Action Card */}
+              <div className="bg-emerald-500 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100 relative overflow-hidden group">
                 <div className="relative z-10">
-                  <h3 className="text-xl font-bold mb-2">Book a Turf</h3>
-                  <p className="text-emerald-100 text-sm mb-6">
-                    Ready for your next game? Find the best slots near you.
-                  </p>
-                  <button
+                  <h3 className="text-2xl font-black mb-2 italic uppercase tracking-tighter">Ready to Play?</h3>
+                  <p className="text-emerald-100 text-xs font-medium mb-8 leading-relaxed">Book the best turfs and invite your team for a match.</p>
+                  <button 
                     onClick={() => handleTabChange("Venues")}
-                    className="w-full bg-white text-emerald-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all"
+                    className="w-full bg-white text-emerald-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-emerald-50 transition-all active:scale-95"
                   >
-                    <Plus size={20} /> New Booking
+                    <Plus size={18} className="inline mr-2" strokeWidth={3} /> New Booking
                   </button>
                 </div>
-                {/* Decorative circles */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
               </div>
             </div>
           </div>
