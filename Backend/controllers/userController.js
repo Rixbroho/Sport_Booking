@@ -282,7 +282,7 @@ const verifyOtp = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { email, otp, password } = req.body;
+    const { email, newPassword, resetToken } = req.body;
 
     if (!email || !otp || !password) {
       return res.status(400).json({ success: false, message: "All fields are required" });
