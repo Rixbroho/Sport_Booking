@@ -72,7 +72,7 @@ const AdminNav = ({ activeTab, setActiveTab, onLogout }) => {
         })}
       </nav>
 
-      {/* User / Logout Section right here*/}
+      {/* User / Logout Section over here*/}
       <div className="p-4 mt-auto">
         <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
            <div className="flex items-center gap-3">
