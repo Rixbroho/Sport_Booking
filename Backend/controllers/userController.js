@@ -2,32 +2,28 @@ const User=require("../models/userModel.js");
 const jwt=require("jsonwebtoken");
 const bcrypt=require("bcrypt");
 const crypto = require('crypto');
-const { sendResetEmail } = require('../helpers/emailService');
 
 const addUser=async(req,res)=>{
     try{
-        const {username,email,password,phoneNumber}=req.body;
+        const {username,email,password,phoneNumber,location,bio}=req.body;
         if(!email || !password){
             return res.status(400).json({success:false,message:"Email and password are required"});
         }
 
-        // const isUser = await User.findOne({where:{username}});
         const isemail = await User.findOne({where:{email}});
-        // if(isUser||isemail){
-        //     return res.json({success:false,message:"User already exists"});
-        // }
         if(isemail){
             return res.json({success:false,message:"User already exists"});
         }
 
         const hassed = await bcrypt.hash(password,10);
-        // console.log(hassed);
 
         const newUser=await User.create({
             username,
             email,
             password: hassed,
-            phoneNumber
+            phoneNumber,
+            location,
+            bio
         });
 
         res.status(201).json({
@@ -78,7 +74,22 @@ const getActiveUsers = async (req, res) => {
 const updateUser=async(req,res)=>{
     try{
         const {id}=req.params;
-        const {username,email,password,phoneNumber}=req.body;
+        const {username,email,password,phoneNumber,location,bio,role}=req.body;
+
+        // Permission check: only admin or the user themselves can update
+        const requester = req.user;
+        if (!requester) {
+          return res.status(401).json({ success:false, message: 'Unauthorized' });
+        }
+        if (requester.role !== 'admin' && parseInt(requester.id) !== parseInt(id)) {
+          return res.status(403).json({ success:false, message: 'Access denied. Admin privileges required.' });
+        }
+
+        // Prevent non-admin users from changing roles
+        if (role && requester.role !== 'admin') {
+          return res.status(403).json({ success:false, message: 'Only admin can change user roles' });
+        }
+
         const user=await User.findByPk(id);
         if(!user){
             return res.status(404).json({message:"User not found"});
@@ -91,6 +102,12 @@ const updateUser=async(req,res)=>{
             }
         }
 
+        if (email) {
+            const isexistingemail = await User.findOne({ where: { email } });
+            if (isexistingemail && isexistingemail.id !== user.id) {
+                return res.status(400).json({ success: false, message: 'User with that email exists' });
+            }
+        }
 
         let hassedPassword=user.password;
         if(password){
@@ -101,6 +118,9 @@ const updateUser=async(req,res)=>{
             email:email|| user.email,
             password:hassedPassword,
             phoneNumber:phoneNumber|| user.phoneNumber,
+            location: typeof location !== 'undefined' ? location : user.location,
+            bio: typeof bio !== 'undefined' ? bio : user.bio,
+            ...(role ? { role } : {})
         });
         return res.status(200).json({success:true,message:"User updated successfully",user:{
             id:user.id
@@ -186,7 +206,10 @@ const getMe = async (req, res) => {
             id: user.id, 
             username: user.username, 
             email: user.email, 
-            role: user.role 
+            role: user.role,
+            phoneNumber: user.phoneNumber,
+            location: user.location,
+            bio: user.bio
         },
         message: "User fetched successfully" 
     })
@@ -200,65 +223,54 @@ const getMe = async (req, res) => {
 
 
 const forgotPassword = async (req, res) => {
-    try {
-        const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ success: false, message: 'Email is required' });
-        }
-
-        const user = await User.findOne({ where: { email } });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        // Generate a 6-digit numeric OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
-        const expires = Date.now() + 60 * 60 * 1000; // 1 hour
-
-        await user.update({ resetPasswordToken: hashedOtp, resetPasswordExpires: expires });
-
-        // Send email with OTP
-        try {
-            await sendResetEmail(user.email, otp, user.username);
-        } catch (emailError) {
-            // Rollback token fields if email fails
-            await user.update({ resetPasswordToken: null, resetPasswordExpires: null });
-            return res.status(500).json({ success: false, message: 'Error sending email', error: emailError.message });
-        }
-
-        return res.status(200).json({ success: true, message: 'OTP sent to email' });
-    } catch (error) {
-        return res.status(500).json({ message: 'Error sending OTP', error: error.message });
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
     }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Generate a 6-digit OTP and store its hash
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+    const expires = Date.now() + 60 * 60 * 1000; // 1 hour
+
+    await user.update({ resetPasswordToken: hashedOtp, resetPasswordExpires: new Date(expires) });
+
+    // NOTE: In production you would send the OTP via email. For development, return the OTP in the response.
+    return res.status(200).json({ success: true, message: 'OTP sent to email (in production this would be emailed)', otp });
+  } catch (error) {
+    return res.status(500).json({ message: "Error sending reset OTP", error: error.message });
+  }
 };
 
 const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
     if (!email || !otp) {
       return res.status(400).json({ success: false, message: 'Email and OTP are required' });
     }
 
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
     const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
-
-    const user = await User.findOne({
-      where: {
-        email,
-        resetPasswordToken: hashedOtp,
-        resetPasswordExpires: { [require('sequelize').Op.gt]: Date.now() },
-      },
-    });
-
-    if (!user) {
+    if (!user.resetPasswordToken || user.resetPasswordToken !== hashedOtp) {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    return res.status(200).json({ success: true, message: 'OTP verified successfully' });
+    if (user.resetPasswordExpires && new Date(user.resetPasswordExpires) < new Date()) {
+      return res.status(400).json({ success: false, message: 'OTP has expired' });
+    }
+
+    return res.json({ success: true, message: 'OTP verified' });
   } catch (error) {
-    return res.status(500).json({ message: 'Error verifying OTP', error: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -267,25 +279,25 @@ const resetPassword = async (req, res) => {
     const { email, otp, password } = req.body;
 
     if (!email || !otp || !password) {
-      return res.status(400).json({ success: false, message: 'Email, OTP and new password are required' });
+      return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
-
-    const user = await User.findOne({
-      where: {
-        email,
-        resetPasswordToken: hashedOtp,
-        resetPasswordExpires: { [require('sequelize').Op.gt]: Date.now() },
-      },
-    });
-
+    const user = await User.findOne({ where: { email } });
     if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Verify OTP
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+    if (!user.resetPasswordToken || user.resetPasswordToken !== hashedOtp) {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (user.resetPasswordExpires && new Date(user.resetPasswordExpires) < new Date()) {
+      return res.status(400).json({ success: false, message: 'OTP has expired' });
+    }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
     await user.update({ password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null });
 
     return res.status(200).json({ success: true, message: 'Password has been reset' });
@@ -294,8 +306,32 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!currentPassword || !newPassword) return res.status(400).json({ success: false, message: 'Current and new passwords are required' });
+    if (newPassword.length < 8) return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await user.update({ password: hashed });
+
+    return res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports={
     getAllUser,addUser,getUsersById,getActiveUsers,updateUser,deleteUser,
-    logInUser,getMe,forgotPassword,verifyOtp,resetPassword
+    logInUser,getMe,forgotPassword,resetPassword, verifyOtp, changePassword
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Save, 
   User, 
@@ -9,19 +9,54 @@ import {
   Database,
   CheckCircle2
 } from "lucide-react";
+import { toast } from 'react-toastify';
+import { getSettings, updateSettings, updateUserProfile, forgotPassword } from '../../services/api';
 
 const AdminSetting = () => {
   const [formData, setFormData] = useState({
-    adminName: "Alex Rivera",
-    adminEmail: "admin@venue-portal.com",
-    siteName: "Enterprise Venue Manager",
-    currency: "NRS (₹)",
+    adminName: "",
+    adminEmail: "",
+    adminAddress: "",
+    siteName: "",
+    currency: "INR (₹)",
     bookingAutoApprove: false,
-    emailAlerts: true,
-    twoFactor: true
+    emailAlerts: false,
+    twoFactor: false
   });
 
   const [isSaved, setIsSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await getSettings();
+        if (res.data.success) {
+          const s = res.data.settings;
+          setFormData({
+            adminName: s.adminName || "",
+            adminEmail: s.adminEmail || "",
+            adminAddress: s.adminAddress || "",
+            siteName: s.siteName || "",
+            currency: s.currency || "INR (₹)",
+            bookingAutoApprove: s.bookingAutoApprove === 'true',
+            emailAlerts: s.emailAlerts === 'true',
+            twoFactor: s.twoFactor === 'true'
+          });
+        }
+      } catch (err) {
+        console.error('Could not load settings', err);
+        toast.error('Failed to load admin settings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -32,9 +67,75 @@ const AdminSetting = () => {
     if (isSaved) setIsSaved(false);
   };
 
-  const handleSave = () => {
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const payload = {
+        adminName: formData.adminName,
+        adminEmail: formData.adminEmail,
+        adminAddress: formData.adminAddress,
+        siteName: formData.siteName,
+        currency: formData.currency,
+        bookingAutoApprove: formData.bookingAutoApprove,
+        emailAlerts: formData.emailAlerts,
+        twoFactor: formData.twoFactor
+      };
+
+      await updateSettings(payload);
+
+      // Also update admin user profile (username/email and optional password)
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user && user.id) {
+        // Validate password fields if provided
+        if (newPassword || confirmPassword) {
+          if (newPassword.length < 8) {
+            toast.error('Password must be at least 8 characters long');
+            setLoading(false);
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            toast.error('Passwords do not match');
+            setLoading(false);
+            return;
+          }
+        }
+
+        const userPayload = { username: formData.adminName, email: formData.adminEmail };
+        if (newPassword) userPayload.password = newPassword;
+
+        await updateUserProfile(user.id, userPayload);
+        // refresh local storage user
+        const updatedUser = { ...user, username: formData.adminName, email: formData.adminEmail };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // clear password fields after successful update
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+
+      setIsSaved(true);
+      toast.success('Settings saved');
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err) {
+      console.error('Error saving settings', err);
+      toast.error('Failed to save settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      const email = formData.adminEmail;
+      if (!email) {
+        toast.error('Admin email is required to reset password');
+        return;
+      }
+      await forgotPassword(email);
+      toast.success('Password reset requested. Check the admin email for the OTP.');
+    } catch (err) {
+      console.error('Error requesting password reset', err);
+      toast.error('Failed to request password reset');
+    }
   };
 
   return (
@@ -47,10 +148,11 @@ const AdminSetting = () => {
         </div>
         <button 
           onClick={handleSave}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-all shadow-sm active:scale-95"
+          disabled={loading}
+          className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaved ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4" />}
-          {isSaved ? "Settings Saved" : "Save Changes"}
+          {isSaved ? "Settings Saved" : loading ? "Saving..." : "Save Changes"}
         </button>
       </div>
 
@@ -84,6 +186,16 @@ const AdminSetting = () => {
                   name="adminEmail"
                   type="email"
                   value={formData.adminEmail}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-500 uppercase">Address</label>
+                <input
+                  name="adminAddress"
+                  type="text"
+                  value={formData.adminAddress}
                   onChange={handleChange}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                 />
@@ -164,7 +276,30 @@ const AdminSetting = () => {
                 <span className="text-sm text-gray-600">2FA Security</span>
                 <span className="px-2 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded uppercase">Active</span>
               </div>
-              <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all">
+
+              {/* Change Password Fields */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 8 chars)"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                />
+              </div>
+
+              <button onClick={handleResetPassword} disabled={loading} className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 <Key className="w-4 h-4" />
                 Reset Password
               </button>

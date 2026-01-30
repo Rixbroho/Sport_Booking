@@ -9,6 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import Nav from "../components/Nav";
+import { toast } from 'react-toastify';
 
 const Settings = ({ user, onLogout, setCurrentPage }) => {
   const [activeNavTab, setActiveNavTab] = useState("Settings");
@@ -40,15 +41,15 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
 
   const handlePasswordChange = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      alert("Password must be at least 6 characters");
+      toast.error("Password must be at least 6 characters");
       return;
     }
     // API call would go here
-    alert("Password changed successfully!");
+    toast.success("Password changed successfully!");
     setShowPasswordModal(false);
     setPasswordData({
       currentPassword: "",
@@ -265,7 +266,7 @@ const Settings = ({ user, onLogout, setCurrentPage }) => {
                         "Are you sure you want to delete your account? This cannot be undone.",
                       )
                     ) {
-                      alert(
+                      toast.info(
                         "Account deletion requested. This feature will be implemented soon.",
                       );
                     }
