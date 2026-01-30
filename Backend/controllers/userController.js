@@ -172,7 +172,7 @@ const logInUser=async(req,res)=>{
 
         const token=jwt.sign(
             {
-                // id:user.id,
+                id: user.id,
                 role:user.role,
                 username:user.username,
                 email:user.email
@@ -197,9 +197,15 @@ const logInUser=async(req,res)=>{
 }
 
 const getMe = async (req, res) => {
-  const id=req.user.id
   try {
-    const user = await User.findByPk(id)
+    const id = req.user?.id;
+    if (!id) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     return res.json({ 
         success:true,
         user: { 
@@ -212,10 +218,10 @@ const getMe = async (req, res) => {
             bio: user.bio
         },
         message: "User fetched successfully" 
-    })
+    });
   } catch (error) {
     return res.status(500).json({
-      message: "Error fetching users",
+      message: "Error fetching user",
       error: error.message,
     });
   }
@@ -276,7 +282,7 @@ const verifyOtp = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { email, newPassword, resetToken } = req.body;
+    const { email, otp, password } = req.body;
 
     if (!email || !otp || !password) {
       return res.status(400).json({ success: false, message: "All fields are required" });
