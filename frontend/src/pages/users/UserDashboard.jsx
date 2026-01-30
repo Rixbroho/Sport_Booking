@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Bell,
@@ -10,6 +10,7 @@ import {
   MapPin,
 } from "lucide-react";
 import Nav from "../components/Nav";
+import { getDashboardStats, getUserBookings } from "../../services/api"; // Updated API imports
 
 const UserDashboard = ({
   user = { username: "Guest", role: "Player" },
@@ -17,6 +18,10 @@ const UserDashboard = ({
   setCurrentPage,
 }) => {
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [stats, setStats] = useState([]);
+  const [upcomingBookings, setUpcomingBookings] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingBookings, setLoadingBookings] = useState(true);
 
   // Ensure user has the required properties
   const displayUser = {
@@ -27,76 +32,53 @@ const UserDashboard = ({
   // Handle tab change
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    switch (tab) {
-      case "Bookings":
-        setCurrentPage("bookings");
-        break;
-      case "Venues":
-        setCurrentPage("venues");
-        break;
-      case "Profile":
-        setCurrentPage("profile");
-        break;
-      case "Settings":
-        setCurrentPage("settings");
-        break;
-      case "Dashboard":
-        setCurrentPage("dashboard");
-        break;
-      default:
-        setCurrentPage("dashboard");
-    }
+    setCurrentPage(tab.toLowerCase());
   };
 
-  const stats = [
-    {
-      label: "Total Bookings",
-      value: "12",
-      icon: Calendar,
-      color: "text-emerald-600",
-      bg: "bg-emerald-100",
-    },
-    {
-      label: "Favorite Turf",
-      value: "Arena 5",
-      icon: MapPin,
-      color: "text-blue-600",
-      bg: "bg-blue-100",
-    },
-    {
-      label: "Hours Played",
-      value: "24h",
-      icon: Clock,
-      color: "text-orange-600",
-      bg: "bg-orange-100",
-    },
-    {
-      label: "Points",
-      value: "850",
-      icon: Trophy,
-      color: "text-purple-600",
-      bg: "bg-purple-100",
-    },
-  ];
+  // Fetch stats from the backend
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoadingStats(true);
+        const response = await getDashboardStats(); // API call to fetch stats
+        if (response.data.success) {
+          const backendStats = response.data.stats.map((stat) => ({
+            label: stat.label,
+            value: stat.value,
+            icon: stat.icon === "Calendar" ? Calendar : stat.icon === "MapPin" ? MapPin : stat.icon === "Clock" ? Clock : Trophy,
+            color: stat.color,
+            bg: stat.bg,
+          }));
+          setStats(backendStats);
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
 
-  const upcomingBookings = [
-    {
-      id: "BK-9921",
-      turf: "Champions Arena",
-      date: "Oct 24, 2023",
-      time: "18:00",
-      status: "Confirmed",
-      price: "$45",
-    },
-    {
-      id: "BK-9925",
-      turf: "Green Valley Turf",
-      date: "Oct 28, 2023",
-      time: "20:00",
-      status: "Pending",
-      price: "$50",
-    },
-  ];
+    fetchStats();
+  }, []);
+
+  // Fetch upcoming bookings from the backend
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoadingBookings(true);
+        const response = await getUserBookings(); // API call to fetch bookings
+        if (response.data.success) {
+          setUpcomingBookings(response.data.bookings);
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      } finally {
+        setLoadingBookings(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -148,26 +130,30 @@ const UserDashboard = ({
         {/* Dashboard Body */}
         <div className="flex-1 overflow-y-auto p-8 pt-28">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            {stats.map((stat, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5 hover:shadow-md transition-shadow"
-              >
-                <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl`}>
-                  <stat.icon size={24} />
+          {loadingStats ? (
+            <p className="text-gray-500">Loading stats...</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              {stats.map((stat, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5 hover:shadow-md transition-shadow"
+                >
+                  <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl`}>
+                    <stat.icon size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">
+                      {stat.label}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {stat.value}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {stat.label}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-800">
-                    {stat.value}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Recent Activity (Bookings Table) */}
@@ -183,57 +169,61 @@ const UserDashboard = ({
                   View All <ChevronRight size={16} />
                 </button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">Venue / ID</th>
-                      <th className="px-6 py-4 font-semibold">Date & Time</th>
-                      <th className="px-6 py-4 font-semibold">Status</th>
-                      <th className="px-6 py-4 font-semibold">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {upcomingBookings.map((booking) => (
-                      <tr
-                        key={booking.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-gray-800">
-                            {booking.turf}
-                          </div>
-                          <div className="text-xs font-mono text-gray-400">
-                            {booking.id}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-800">
-                            {booking.date}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {booking.time}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              booking.status === "Confirmed"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-amber-100 text-amber-700"
-                            }`}
-                          >
-                            {booking.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 font-bold text-gray-800">
-                          {booking.price}
-                        </td>
+              {loadingBookings ? (
+                <p className="text-gray-500 p-6">Loading bookings...</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                      <tr>
+                        <th className="px-6 py-4 font-semibold">Venue / ID</th>
+                        <th className="px-6 py-4 font-semibold">Date & Time</th>
+                        <th className="px-6 py-4 font-semibold">Status</th>
+                        <th className="px-6 py-4 font-semibold">Amount</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {upcomingBookings.map((booking) => (
+                        <tr
+                          key={booking.id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-gray-800">
+                              {booking.turf}
+                            </div>
+                            <div className="text-xs font-mono text-gray-400">
+                              {booking.id}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-800">
+                              {booking.date}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {booking.time}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                booking.status === "Confirmed"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-amber-100 text-amber-700"
+                              }`}
+                            >
+                              {booking.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-bold text-gray-800">
+                            {booking.price}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             {/* Quick Action Sidebar */}
@@ -253,25 +243,6 @@ const UserDashboard = ({
                 </div>
                 {/* Decorative circles */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">
-                  Quick Shortcuts
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleTabChange("Venues")}
-                    className="p-3 bg-gray-50 rounded-2xl text-center hover:bg-emerald-50 hover:text-emerald-600 transition-all"
-                  >
-                    <MapPin size={20} className="mx-auto mb-2" />
-                    <span className="text-xs font-bold">Nearby</span>
-                  </button>
-                  <button className="p-3 bg-gray-50 rounded-2xl text-center hover:bg-emerald-50 hover:text-emerald-600 transition-all">
-                    <Trophy size={20} className="mx-auto mb-2" />
-                    <span className="text-xs font-bold">Leagues</span>
-                  </button>
-                </div>
               </div>
             </div>
           </div>
