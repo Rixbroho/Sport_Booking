@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   MapPin,
@@ -8,74 +8,153 @@ import {
   Users,
   Clock,
   AlertCircle,
+  Loader2,
+  X,
+  Calendar
 } from "lucide-react";
+import { toast } from "react-toastify";
 import Nav from "../components/Nav";
+import { getAllVenues, createBooking, getVenueBookings } from "../../services/api";
 
 const Venues = ({ user, onLogout, setCurrentPage }) => {
   const [activeNavTab, setActiveNavTab] = useState("Venues");
   const [searchTerm, setSearchTerm] = useState("");
+  const [venues, setVenues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [bookingData, setBookingData] = useState({
+    date: "",
+    time: "",
+    players: ""
+  });
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [unavailableSlots, setUnavailableSlots] = useState([]);
 
   const handleNavTabChange = (tab) => {
     setActiveNavTab(tab);
     setCurrentPage(tab.toLowerCase());
   };
 
-  const [venues] = useState([
-    {
-      id: 1,
-      name: "Champions Arena",
-      location: "Downtown Sports Complex",
-      type: "Football",
-      rating: 4.8,
-      price: "$45/hour",
-      availability: "Available",
-      contact: "+1-234-567-8900",
-      email: "champions@sports.com",
-      image: "🏟️",
-    },
-    {
-      id: 2,
-      name: "Green Valley Turf",
-      location: "Riverside Arena",
-      type: "Basketball",
-      rating: 4.5,
-      price: "$50/hour",
-      availability: "Available",
-      contact: "+1-234-567-8901",
-      email: "greenvalley@sports.com",
-      image: "🏀",
-    },
-    {
-      id: 3,
-      name: "Elite Sports Zone",
-      location: "Central Hub",
-      type: "Cricket",
-      rating: 4.6,
-      price: "$60/hour",
-      availability: "Booked",
-      contact: "+1-234-567-8902",
-      email: "elite@sports.com",
-      image: "🏏",
-    },
-    {
-      id: 4,
-      name: "Sunset Park Courts",
-      location: "West End",
-      type: "Tennis",
-      rating: 4.7,
-      price: "$40/hour",
-      availability: "Available",
-      contact: "+1-234-567-8903",
-      email: "sunset@sports.com",
-      image: "🎾",
-    },
-  ]);
+  // Fetch venues from the backend
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllVenues();
+        if (response.data.success) {
+          setVenues(response.data.venues);
+        }
+      } catch (error) {
+        console.error("Error fetching venues:", error);
+        toast.error("Failed to load venues");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVenues();
+  }, []);
+
+  const handleOpenBookingModal = (venue) => {
+    setSelectedVenue(venue);
+    setBookingData({ date: "", time: "", players: "" });
+    setUnavailableSlots([]);
+    setIsModalOpen(true);
+  };
+
+  const handleDateChange = async (e) => {
+    const today = new Date();
+    const selectedDate = new Date(e.target.value);
+
+    // Ensure the selected date is strictly in the future
+    if (selectedDate <= today.setHours(0, 0, 0, 0)) {
+      toast.error("You cannot select a past or today's date.");
+      return;
+    }
+
+    const dateValue = e.target.value;
+    setBookingData({ ...bookingData, date: dateValue });
+
+    // Fetch existing bookings for this venue & date and mark their time slots as unavailable
+    try {
+      if (selectedVenue?.id) {
+        const res = await getVenueBookings(selectedVenue.id, dateValue);
+        if (res.data.success) {
+          setUnavailableSlots(res.data.bookings.map((b) => b.time));
+        } else {
+          setUnavailableSlots([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching booked slots:", err);
+      setUnavailableSlots([]);
+    }
+  };
+
+  const predefinedTimeSlots = [
+    "08:00 AM - 09:00 AM",
+    "09:00 AM - 10:00 AM",
+    "10:00 AM - 11:00 AM",
+    "11:00 AM - 12:00 PM",
+    "12:00 PM - 01:00 PM",
+    "01:00 PM - 02:00 PM",
+    "02:00 PM - 03:00 PM",
+    "03:00 PM - 04:00 PM",
+    "04:00 PM - 05:00 PM",
+    "05:00 PM - 06:00 PM",
+    "06:00 PM - 07:00 PM",
+    "07:00 PM - 08:00 PM",
+    "08:00 PM - 09:00 PM",
+  ];
+
+  const handleTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    setBookingData({ ...bookingData, time: selectedTime });
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!bookingData.date || !bookingData.time || !bookingData.players) {
+      toast.warning("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setBookingLoading(true);
+      const payload = {
+        venueId: selectedVenue.id,
+        venueName: selectedVenue.name,
+        location: selectedVenue.location,
+        type: selectedVenue.type,
+        price: selectedVenue.price,
+        date: bookingData.date,
+        time: bookingData.time,
+        players: parseInt(bookingData.players)
+      };
+
+      const response = await createBooking(payload);
+      if (response.data.success) {
+        toast.success("Booking request sent successfully! Awaiting admin approval.");
+        setIsModalOpen(false);
+        setBookingData({ date: "", time: "", players: "" });
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      if (error.response?.status === 409) {
+        toast.warning(error.response?.data?.message || "Selected time slot already booked");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to create booking");
+      }
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   const filteredVenues = venues.filter(
     (venue) =>
       venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       venue.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      venue.type.toLowerCase().includes(searchTerm.toLowerCase()),
+      venue.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -107,9 +186,9 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
             <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
               <div className="text-right">
                 <p className="text-sm font-bold text-gray-800">
-                  {user?.username}
+                  {user?.username || "Guest"}
                 </p>
-                <p className="text-xs text-gray-500">{user?.role}</p>
+                <p className="text-xs text-gray-500">{user?.role || "User"}</p>
               </div>
               <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
                 {user?.username
@@ -123,99 +202,246 @@ const Venues = ({ user, onLogout, setCurrentPage }) => {
 
         {/* Venues Content */}
         <div className="flex-1 overflow-y-auto p-8 pt-28">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredVenues.map((venue) => (
-              <div
-                key={venue.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all overflow-hidden"
-              >
-                {/* Header */}
-                <div
-                  className={`h-20 flex items-center justify-center text-6xl ${venue.availability === "Available" ? "bg-emerald-50" : "bg-amber-50"}`}
-                >
-                  {venue.image}
-                </div>
-
-                <div className="p-6">
-                  {/* Title and Rating */}
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-800">
-                        {venue.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">{venue.type}</p>
-                    </div>
-                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
-                      <Star
-                        size={14}
-                        className="text-yellow-500 fill-yellow-500"
-                      />
-                      <span className="text-sm font-bold text-yellow-700">
-                        {venue.rating}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-start gap-2 mb-4 text-gray-700">
-                    <MapPin
-                      size={16}
-                      className="text-emerald-500 mt-1 flex-shrink-0"
-                    />
-                    <p className="text-sm">{venue.location}</p>
-                  </div>
-
-                  {/* Contact Info */}
-                  <div className="space-y-2 mb-4 pb-4 border-b border-gray-100">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone size={14} className="text-emerald-500" />
-                      <p className="text-xs">{venue.contact}</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Mail size={14} className="text-emerald-500" />
-                      <p className="text-xs">{venue.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Price and Availability */}
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-bold text-emerald-600">
-                      {venue.price}
-                    </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                        venue.availability === "Available"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-amber-100 text-amber-700"
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-64">
+              <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mb-4" />
+              <p className="text-gray-500 font-medium">Loading venues...</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredVenues.map((venue) => (
+                  <div
+                    key={venue.id}
+                    className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all overflow-hidden group"
+                  >
+                    {/* Header */}
+                    <div
+                      className={`h-40 flex items-center justify-center overflow-hidden ${
+                        venue.availability === "Available" ? "bg-emerald-50" : "bg-amber-50"
                       }`}
                     >
-                      {venue.availability === "Available" ? "✓" : "⏱"}
-                      {venue.availability}
-                    </span>
+                      {venue.image && venue.image.startsWith("/uploads") ? (
+                        <img
+                          src={`http://localhost:3000${venue.image}`}
+                          alt={venue.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="text-6xl">{venue.image || "🏟️"}</div>
+                      )}
+                    </div>
+
+                    <div className="p-6">
+                      {/* Title and Rating */}
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="max-w-[70%]">
+                          <h3 className="text-lg font-bold text-gray-800 truncate group-hover:text-emerald-600 transition-colors">
+                            {venue.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">{venue.type}</p>
+                        </div>
+                        <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
+                          <Star
+                            size={14}
+                            className="text-yellow-500 fill-yellow-500"
+                          />
+                          <span className="text-sm font-bold text-yellow-700">
+                            {venue.rating || "5.0"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Location */}
+                      <div className="flex items-start gap-2 mb-4 text-gray-700 h-10">
+                        <MapPin
+                          size={16}
+                          className="text-emerald-500 mt-1 flex-shrink-0"
+                        />
+                        <p className="text-sm line-clamp-2">{venue.location}</p>
+                      </div>
+
+                      {/* Contact Info */}
+                      <div className="space-y-2 mb-4 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Phone size={14} className="text-emerald-500" />
+                          <p className="text-xs">{venue.contact || "Contact via App"}</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Mail size={14} className="text-emerald-500" />
+                          <p className="text-xs">{venue.email || "No email listed"}</p>
+                        </div>
+                      </div>
+
+                      {/* Price and Availability */}
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-lg font-bold text-emerald-600">
+                          {venue.price}
+                        </span>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                            venue.availability === "Available"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {venue.availability === "Available" ? "✓" : "⏱"}
+                          {venue.availability}
+                        </span>
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={() => handleOpenBookingModal(venue)}
+                        className="w-full px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold active:scale-95"
+                      >
+                        Book Now
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Action Button */}
-                  <button className="w-full px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-semibold">
-                    Book Now
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {filteredVenues.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-96 text-center">
-              <MapPin size={64} className="text-gray-300 mb-4" />
-              <h3 className="text-2xl font-bold text-gray-600 mb-2">
-                No Venues Found
-              </h3>
-              <p className="text-gray-500">
-                Try adjusting your search criteria
-              </p>
-            </div>
+              {filteredVenues.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-96 text-center">
+                  <MapPin size={64} className="text-gray-300 mb-4" />
+                  <h3 className="text-2xl font-bold text-gray-600 mb-2">
+                    No Venues Found
+                  </h3>
+                  <p className="text-gray-500">
+                    Try adjusting your search criteria or check back later.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
+
+      {/* Booking Modal */}
+      {isModalOpen && selectedVenue && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-emerald-500 p-6 text-white flex justify-between items-center">
+              <div>
+                <h3 className="text-2xl font-bold">Book Venue</h3>
+                <p className="text-emerald-100 text-sm">{selectedVenue.name}</p>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="hover:bg-emerald-600 p-1 rounded-lg transition-all"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              {/* Date Input */}
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase block mb-2">
+                  Select Date
+                </label>
+                <div className="flex items-center bg-gray-50 rounded-lg px-3 border border-gray-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+                  <Calendar size={18} className="text-emerald-500" />
+                  <input
+                    type="date"
+                    value={bookingData.date}
+                    onChange={handleDateChange}
+                    min={new Date().toISOString().split("T")[0]} // Disable past dates
+                    className="w-full p-3 bg-transparent outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Time Input */}
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase block mb-2">
+                  Select Time
+                </label>
+                <div className="flex items-center bg-gray-50 rounded-lg px-3 border border-gray-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+                  <Clock size={18} className="text-emerald-500" />
+                  <select
+                    value={bookingData.time}
+                    onChange={handleTimeChange}
+                    disabled={!bookingData.date} // Ensure dropdown is enabled only when a valid date is selected
+                    className={`w-full p-3 bg-transparent outline-none text-gray-700 text-sm ${
+                      !bookingData.date ? "cursor-not-allowed opacity-50" : ""
+                    }`}
+                  >
+                    <option value="" disabled>
+                      Select a time slot
+                    </option>
+                    {predefinedTimeSlots.map((slot) => {
+                      const isBooked = unavailableSlots.includes(slot);
+                      return (
+                        <option key={slot} value={slot} disabled={isBooked}>
+                          {slot}{isBooked ? " (Booked)" : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                {!bookingData.date && (
+                  <p className="text-xs text-red-500 mt-1">Please select a date first.</p>
+                )}
+              </div>
+
+              {/* Players Input */}
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase block mb-2">
+                  Total Players
+                </label>
+                <div className="flex items-center bg-gray-50 rounded-lg px-3 border border-gray-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+                  <Users size={18} className="text-emerald-500" />
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="10"
+                    value={bookingData.players}
+                    onChange={(e) =>
+                      setBookingData({ ...bookingData, players: e.target.value })
+                    }
+                    className="w-full p-3 bg-transparent outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Booking Info */}
+              <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+                <p className="text-sm text-emerald-800">
+                  <span className="font-bold">Venue Price:</span> {selectedVenue.price}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmBooking}
+                  disabled={bookingLoading}
+                  className="flex-1 px-4 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {bookingLoading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Booking...
+                    </>
+                  ) : (
+                    "Confirm Booking"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

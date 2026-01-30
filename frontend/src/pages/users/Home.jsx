@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Trophy,
@@ -12,10 +12,41 @@ import {
   Menu,
   X
 } from "lucide-react";
+import { toast } from "react-toastify";
+import { getAllVenues } from "../../services/api";
 
 const Home = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [venues, setVenues] = useState([]);
+  const [loadingVenues, setLoadingVenues] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(""); // Add state for search term
+
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        setLoadingVenues(true);
+        const response = await getAllVenues();
+        if (response?.data?.success) {
+          setVenues(response.data.venues || []);
+        }
+      } catch (error) {
+        console.error("Error fetching venues:", error);
+        toast.error("Failed to load venues");
+      } finally {
+        setLoadingVenues(false);
+      }
+    };
+
+    fetchVenues();
+  }, []);
+
+  // Filter venues based on the search term
+  const filteredVenues = venues.filter(
+    (venue) =>
+      venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      venue.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-emerald-100">
@@ -65,7 +96,7 @@ const Home = () => {
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 max-w-5xl mx-auto pb-20">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-emerald-50 text-xs md:text-sm font-bold mb-6 border border-white/20">
             <Activity className="w-4 h-4 text-emerald-300" />
-            <span>Over 500+ venues available now</span>
+            <span>{loadingVenues ? "Loading venues..." : `${venues.length} venues available now`}</span>
           </div>
           
           <h1 className="text-4xl sm:text-6xl lg:text-8xl font-extrabold text-white mb-6 leading-[1.1] tracking-tight">
@@ -84,6 +115,8 @@ const Home = () => {
               <input 
                 type="text" 
                 placeholder="Where do you want to play?" 
+                value={searchTerm} // Bind input to searchTerm state
+                onChange={(e) => setSearchTerm(e.target.value)} // Update searchTerm on input change
                 className="w-full bg-white/20 border-none rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-emerald-100 outline-none focus:ring-2 focus:ring-white/50 transition-all"
               />
             </div>
@@ -117,9 +150,21 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          <VenuePreview image="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000" name="The Arena Center" type="Football" price="$45/hr" />
-          <VenuePreview image="https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=1000" name="Skyline Courts" type="Basketball" price="$30/hr" />
-          <VenuePreview image="https://images.unsplash.com/photo-1544105492-7f180391e93f?q=80&w=1000" name="Green Garden Turf" type="Cricket" price="$40/hr" />
+          {loadingVenues ? (
+            <div className="col-span-3 flex items-center justify-center">
+              <p className="text-gray-500">Loading venues...</p>
+            </div>
+          ) : (
+            filteredVenues.slice(0, 3).map((v) => ( // Use filteredVenues instead of venues
+              <VenuePreview
+                key={v.id}
+                image={v.image}
+                name={v.name}
+                type={v.type}
+                price={v.price}
+              />
+            ))
+          )}
         </div>
       </section>
 
@@ -139,6 +184,47 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* --- FOOTER SECTION --- */}
+      <footer className="bg-gray-900 text-white py-10">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* About Section */}
+          <div>
+            <h3 className="text-xl font-bold mb-4">About TurfTime</h3>
+            <p className="text-gray-400 text-sm">
+              TurfTime is your ultimate platform to discover, book, and play at the best sports venues. Join us and elevate your game today!
+            </p>
+          </div>
+
+          {/* Social Media Links */}
+          <div>
+            <h3 className="text-xl font-bold mb-4">Follow Us</h3>
+            <div className="flex gap-4">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+                <i className="fab fa-facebook-f"></i> Facebook
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+                <i className="fab fa-twitter"></i> Twitter
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+                <i className="fab fa-instagram"></i> Instagram
+              </a>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div>
+            <h3 className="text-xl font-bold mb-4">Contact Us</h3>
+            <p className="text-gray-400 text-sm">Email: support@turftime.com</p>
+            <p className="text-gray-400 text-sm">Phone: +1 234 567 890</p>
+            <p className="text-gray-400 text-sm">Address: 123 Sports Lane, City, Country</p>
+          </div>
+        </div>
+
+        <div className="mt-10 text-center text-gray-500 text-sm">
+          © {new Date().getFullYear()} TurfTime. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 };
@@ -157,16 +243,28 @@ const StatCard = ({ icon, label, value, color }) => (
 );
 
 const VenuePreview = ({ image, name, type, price }) => (
-  <div className="group cursor-pointer">
+  <div className="group cursor-pointer hover:shadow-xl transition-shadow">
     <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] mb-6 shadow-lg">
-      <img src={image} alt={name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+      {image && image.startsWith("/uploads") ? (
+        <img
+          src={`http://localhost:3000${image}`}
+          alt={name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+      ) : (
+        <div className="w-full h-full bg-emerald-50 flex items-center justify-center text-6xl">
+          {image || "🏟️"}
+        </div>
+      )}
       <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black text-emerald-700 uppercase tracking-wider shadow-sm">
         {type}
       </div>
     </div>
     <div className="flex justify-between items-start">
       <div className="space-y-1">
-        <h4 className="text-xl font-black text-gray-900 group-hover:text-emerald-600 transition-colors">{name}</h4>
+        <h4 className="text-xl font-black text-gray-900 group-hover:text-emerald-600 transition-colors">
+          {name}
+        </h4>
         <div className="flex items-center gap-1.5 text-gray-500 text-sm font-medium">
           <MapPin size={16} className="text-emerald-500" />
           <span>2.4 miles away</span>
@@ -174,7 +272,9 @@ const VenuePreview = ({ image, name, type, price }) => (
       </div>
       <div className="text-right">
         <p className="text-emerald-600 font-black text-xl">{price}</p>
-        <span className="text-[10px] text-gray-400 font-bold uppercase block">starts from</span>
+        <span className="text-[10px] text-gray-400 font-bold uppercase block">
+          starts from
+        </span>
       </div>
     </div>
   </div>

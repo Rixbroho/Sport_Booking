@@ -62,7 +62,7 @@ const SignIn = ({ onSwitchToLogin, onSignup, isAuthenticated }) => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-teal-400 via-emerald-500 to-green-600 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
+      {/* Animated   */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl top-0 -right-48 animate-pulse"></div>
         <div className="absolute w-96 h-96 bg-teal-400/30 rounded-full blur-3xl bottom-0 -left-48 animate-pulse delay-1000"></div>
