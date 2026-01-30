@@ -1,4 +1,6 @@
 const Booking = require("../models/bookingModel");
+const User = require("../models/usermodel");
+const { sendBookingConfirmedEmail } = require("../helpers/emailService");
 
 exports.createBooking = async (req, res) => {
   try {
@@ -45,8 +47,50 @@ exports.updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
+    // Find existing booking
+    const booking = await Booking.findByPk(id);
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+
+    // Update status
     await Booking.update({ status }, { where: { id } });
-    res.json({ success: true, message: `Booking ${status}` });
+
+    // Fetch updated booking
+    const updatedBooking = await Booking.findByPk(id);
+
+    // Track whether email was sent and related info
+    let emailSent = false;
+    let emailAttempts = 0;
+    let emailError = null;
+
+    // If booking is confirmed, notify the booking owner (customer) by email
+    if (status === 'Confirmed') {
+      try {
+        // Fetch the booking's user to get their email
+        const bookingUser = await User.findByPk(updatedBooking.userId);
+        const recipientEmail = bookingUser?.email;
+        const recipientName = bookingUser?.username || updatedBooking.userName || bookingUser?.email || 'Customer';
+
+        if (recipientEmail) {
+          try {
+            const result = await sendBookingConfirmedEmail(recipientEmail, updatedBooking, recipientName);
+            emailSent = !!result.success;
+            emailAttempts = result.attempts || 0;
+            emailError = result.error || null;
+            console.log(`Booking confirmation email ${emailSent ? 'sent' : 'failed'} to ${recipientEmail}`, result);
+          } catch (err) {
+            console.error('Unexpected error sending booking confirmation email to user:', err && err.message ? err.message : err);
+            emailError = (err && err.message) || String(err);
+          }
+        } else {
+          console.warn('Booking user email not found; skipping confirmation email');
+        }
+      } catch (err) {
+        console.error('Error fetching booking user for confirmation email:', err && err.message ? err.message : err);
+      }
+    }
+
+    res.json({ success: true, message: `Booking ${status}`, emailSent, emailAttempts, emailError });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
