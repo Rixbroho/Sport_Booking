@@ -14,7 +14,7 @@ const VerifyOtp = () => {
   const [canResend, setCanResend] = useState(false);
 
   useEffect(() => {
-    // Get email from navigation 
+    // Get email  navigation 
     if (location.state?.email) {
       setEmail(location.state.email);
       setCanResend(false);
