@@ -12,7 +12,7 @@ const UserBookingSetting = () => {
   const storedUser = localStorage.getItem("user");
   const currentUser = storedUser ? JSON.parse(storedUser) : null;
 
-  // Determine  status :  `user` object, fall back to decoding the JWT token payload.
+  // Determine admin status :  `user` object, fall back to decoding the JWT token payload.
   const getRoleFromToken = () => {
     try {
       const token = localStorage.getItem("token");
