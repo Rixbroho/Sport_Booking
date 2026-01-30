@@ -28,6 +28,14 @@ const User=sequelize.define('User',{
         type:DataTypes.STRING,
         allowNull:true,
     },
+    location: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    bio: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
     role: {
       type: DataTypes.ENUM('user', 'admin'),
       allowNull: false,

@@ -1,23 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   User, Mail, Phone, MapPin, Edit2, Save, Bell, 
   Lock, Camera, Globe, ChevronRight, Loader2, CheckCircle 
 } from "lucide-react";
 import Nav from "../components/Nav";
-import { updateUserProfile } from "../../services/api";
+import { updateUserProfile, getMe, changePassword } from "../../services/api";
+import { toast } from 'react-toastify';
 
 const Profile = ({ user, onLogout, setCurrentPage }) => {
   const [activeNavTab, setActiveNavTab] = useState("Profile");
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [pwdModalOpen, setPwdModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   const [profileData, setProfileData] = useState({
-    username: user?.username || "Guest",
-    email: user?.email || "",
-    phone: user?.phoneNumber || "",
-    location: "Mumbai, India",
-    bio: "Love playing football every weekend!",
+    username: '',
+    email: '',
+    phone: '',
+    location: '',
+    bio: '',
   });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await getMe();
+        if (res.data.success) {
+          const u = res.data.user;
+          setProfileData({
+            username: u.username || 'Guest',
+            email: u.email || '',
+            phone: u.phoneNumber || '',
+            location: u.location || 'Mumbai, India',
+            bio: u.bio || ''
+          });
+          // ensure localStorage user is up-to-date
+          localStorage.setItem('user', JSON.stringify(u));
+        }
+      } catch (err) {
+        console.error('Error loading profile', err);
+      }
+    };
+    load();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,15 +59,25 @@ const Profile = ({ user, onLogout, setCurrentPage }) => {
         username: profileData.username,
         email: profileData.email,
         phoneNumber: profileData.phone,
+        location: profileData.location,
+        bio: profileData.bio
       };
 
-      const userId = user?.id || user?._id;
-      await updateUserProfile(userId, payload);
-      
-      setIsEditing(false);
-      alert("Profile updated successfully!");
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = storedUser.id;
+      const res = await updateUserProfile(userId, payload);
+
+      if (res.data.success) {
+        // Update localStorage user
+        const updatedUser = { ...storedUser, username: profileData.username, email: profileData.email };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setIsEditing(false);
+        toast.success('Profile updated successfully!');
+      } else {
+        toast.error(res.data.message || 'Failed to update profile');
+      }
     } catch (error) {
-      alert(error.response?.data?.message || "Error updating profile");
+      toast.error(error.response?.data?.message || 'Error updating profile');
     } finally {
       setIsUpdating(false);
     }
@@ -220,7 +258,7 @@ const Profile = ({ user, onLogout, setCurrentPage }) => {
                 <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
                   <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Security</h4>
                   <div className="space-y-3">
-                    <button className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-emerald-50 transition-all group">
+                    <button onClick={() => setPwdModalOpen(true)} className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-emerald-50 transition-all group">
                       <div className="flex items-center gap-3 text-gray-700 font-bold text-sm">
                         <Lock size={18} className="text-gray-400 group-hover:text-emerald-600" />
                         Update Password
@@ -248,6 +286,41 @@ const Profile = ({ user, onLogout, setCurrentPage }) => {
             </div>
           </div>
         </div>
+
+        {/* Change Password Modal */}
+        {pwdModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+              <h3 className="text-lg font-bold mb-4">Change Password</h3>
+              <div className="space-y-3">
+                <input type="password" placeholder="Current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-4 py-3 border rounded-lg" />
+                <input type="password" placeholder="New password (min 8 chars)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-4 py-3 border rounded-lg" />
+                <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border rounded-lg" />
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button onClick={() => setPwdModalOpen(false)} className="px-4 py-2 rounded-lg bg-gray-100">Cancel</button>
+                <button onClick={async () => {
+                  if (!currentPassword || !newPassword || !confirmPassword) { toast.error('Please fill all fields'); return; }
+                  if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
+                  if (newPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+                  try {
+                    const res = await changePassword(currentPassword, newPassword);
+                    if (res.data.success) {
+                      toast.success('Password changed successfully');
+                      setPwdModalOpen(false);
+                      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+                    } else {
+                      toast.error(res.data.message || 'Failed to change password');
+                    }
+                  } catch (err) {
+                    toast.error(err.response?.data?.message || 'Error changing password');
+                  }
+                }} className="px-4 py-2 rounded-lg bg-emerald-600 text-white">Change Password</button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
