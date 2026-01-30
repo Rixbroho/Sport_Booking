@@ -6,6 +6,8 @@ const isAdmin = require("../helpers/isAdmin");
 // User routes
 router.post("/booking", authGuard, bookingController.createBooking);
 router.get("/booking/user", authGuard, bookingController.getUserBookings);
+// Get bookings for a specific venue & date (used by frontend to disable booked time slots)
+router.get("/booking/venue", authGuard, bookingController.getBookingsForVenue);
 
 // Admin routes
 router.get("/booking", authGuard, isAdmin, bookingController.getAllBookings);

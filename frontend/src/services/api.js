@@ -60,6 +60,9 @@ export const getMe = () => API.get('/user/me');
 export const updateUserProfile = (userId, userData) =>
   API.put(`/user/updateuserbyid/${userId}`, userData);
 
+export const getSettings = () => API.get('/admin/settings');
+export const updateSettings = (settings) => API.put('/admin/settings', settings);
+
 export const getAllUsers = () => API.get('/user/getalluser');
 
 export const getUserById = (userId) => API.get(`/user/getusersbyid/${userId}`);
@@ -97,8 +100,19 @@ export const createBooking = (bookingData) =>
 export const getUserBookings = () =>
   API.get("/booking/user");
 
+export const getVenueBookings = (venueId, date) =>
+  API.get("/booking/venue", { params: { venueId, date } });
+
 export const getAllBookings = () =>
   API.get("/booking");
+
+export const changePassword = (currentPasswordOrObj, newPassword) => {
+  if (typeof currentPasswordOrObj === 'object') {
+    const { currentPassword, newPassword: np } = currentPasswordOrObj;
+    return API.post('/user/changepassword', { currentPassword, newPassword: np });
+  }
+  return API.post('/user/changepassword', { currentPassword: currentPasswordOrObj, newPassword });
+};
 
 export const updateBookingStatus = (id, status) =>
   API.put(`/booking/${id}/status`, { status });

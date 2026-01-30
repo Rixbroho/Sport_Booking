@@ -7,6 +7,13 @@ exports.createBooking = async (req, res) => {
     // Log this to your terminal to see what's actually inside your token
     console.log("Token Data:", req.user);
 
+    // Prevent double-booking: check if the same venue/date/time already exists
+    const { venueId, date, time } = req.body;
+    const existing = await Booking.findOne({ where: { venueId, date, time } });
+    if (existing) {
+      return res.status(409).json({ success: false, message: "Selected time slot is already booked for this venue." });
+    }
+
     const newBooking = await Booking.create({
       ...req.body,
       userId: req.user.id,
@@ -37,6 +44,21 @@ exports.getUserBookings = async (req, res) => {
       where: { userId: req.user.id },
       order: [['createdAt', 'DESC']]
     });
+    res.json({ success: true, bookings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Return bookings for a specific venue on a specific date (used to show unavailable time slots)
+exports.getBookingsForVenue = async (req, res) => {
+  try {
+    const { venueId, date } = req.query;
+    if (!venueId || !date) {
+      return res.status(400).json({ success: false, message: 'venueId and date are required' });
+    }
+
+    const bookings = await Booking.findAll({ where: { venueId, date } });
     res.json({ success: true, bookings });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
